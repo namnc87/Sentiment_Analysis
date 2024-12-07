@@ -111,6 +111,8 @@ try:
     # Hiển thị biểu đồ trong Streamlit
     st.pyplot(fig)
 
+    st.markdown("## Dựa số liệu ở trên, chọn model SVM")
+    
 except FileNotFoundError:
     st.error(f"Không tìm thấy file '{output_file}'. Vui lòng kiểm tra lại đường dẫn file.")
 except Exception as e:
