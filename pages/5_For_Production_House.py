@@ -27,6 +27,7 @@ st.sidebar.success("Ngày báo cáo: /n # 16/12/2024")
 
 # "C:/Users/Windows 10/Documents/Zalo Received Files/GUI_project1_Copy/GUI_project1_Copy/"
 
+# Load data
 san_pham = pd.read_csv('San_pham.csv')
 danh_gia= pd.read_csv('Danh_gia.csv')
 khach_hang= pd.read_csv('Khach_hang.csv')
@@ -46,42 +47,6 @@ danhgia_sanpham = danh_gia.merge(san_pham,on="ma_san_pham", how='left')
 df=danhgia_sanpham.copy()
 
 #------------START_Hàm thống kế số lượng bình luận theo tháng-------------------------------
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
-
 def analyze_comments_by_month(df, product_id):
     """Thống kê số lượng bình luận theo tháng cho một sản phẩm."""
     
@@ -102,10 +67,10 @@ def analyze_comments_by_month(df, product_id):
     col1, col2 = st.columns(2)
     
     with col1:
-        start_month = st.date_input('Tháng bắt đầu:', value=min_month.to_timestamp())
+        start_month = st.date_input('Tháng bắt đầu:', value=min_month.to_timestamp(), key=f'start_month_{product_id}')
         
     with col2:
-        end_month = st.date_input('Tháng kết thúc:', value=max_month.to_timestamp())
+        end_month = st.date_input('Tháng kết thúc:', value=max_month.to_timestamp(), key=f'end_month_{product_id}')
     
     # Chuyển đổi đến định dạng Timestamp để sử dụng với to_period
     start_period = pd.to_datetime(start_month).to_period('M')
@@ -142,6 +107,10 @@ def analyze_comments_by_month(df, product_id):
         rating_counts = filtered_comments['so_sao'].value_counts().reindex(range(1, 6), fill_value=0).reset_index()
         rating_counts.columns = ['so_sao', 'count']
     
+        # Hiển thị tổng số lượng bình luận
+        total_comments = filtered_comments.shape[0]
+        st.write(f"**Tổng số bình luận có trong khoảng thời gian đã chọn: {total_comments} bình luận.**")
+
         # Hiển thị thống kê đánh giá
         st.write(f"**Thống kê bình luận theo đánh giá trong khoảng thời gian từ {start_month} đến {end_month}:**")
     
@@ -171,10 +140,10 @@ def analyze_comments_by_month(df, product_id):
             with tabs[i-1]:
                 comments_for_rating = filtered_comments[filtered_comments['so_sao'] == i]
                 if not comments_for_rating.empty:
-                    st.write(f"**Chi tiết bình luận cho đánh giá {i}:**")
-                    st.dataframe(comments_for_rating[['ngay_binh_luan', 'noi_dung_binh_luan']])
+                    st.write(f"**Chi tiết bình luận cho đánh giá {i} sao:**")
+                    st.dataframe(comments_for_rating[['ngay_binh_luan', 'noi_dung_binh_luan']],use_container_width=True)
                 else:
-                    st.write(f"Không có bình luận nào cho đánh giá {i}.")
+                    st.write(f"Không có bình luận nào cho đánh giá {i} sao.")
     
         # Để giữ cho chiều cao cột cân bằng, tạo một dòng trống bằng cách sử dụng `st.empty()`.
         st.empty()  # Giữ không gian cho chiều cao bằng nhau
@@ -184,14 +153,6 @@ def analyze_comments_by_month(df, product_id):
 #------------END_Hàm thống kế số lượng bình luận theo tháng-------------------------------
 
 #------------START_Hàm thống kế số lượng bình luận theo giờ-------------------------------
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
-
 def analyze_comments_by_hour(df, product_id):
     """Thống kê số lượng bình luận theo khung giờ trong ngày cho một sản phẩm."""
     
@@ -202,68 +163,102 @@ def analyze_comments_by_hour(df, product_id):
     product_comments['gio_binh_luan'] = product_comments['gio_binh_luan'].astype(str)
     product_comments['hour'] = pd.to_datetime(product_comments['gio_binh_luan'], format='%H:%M').dt.hour
 
+    # Thiết lập giờ bắt đầu và giờ kết thúc với giá trị mặc định là giờ nhỏ nhất và lớn nhất
+    min_hour = int(product_comments['hour'].min())  # Chuyển về kiểu int
+    max_hour = int(product_comments['hour'].max())  # Chuyển về kiểu int
+    
+    st.write("**Chọn khoảng thời gian (giờ) để xem bình luận:**")
+    
+    # Tạo hai cột cho ô nhập giờ bắt đầu và giờ kết thúc
+    col1, col2 = st.columns(2)
+
+    with col1:
+        start_hour = st.selectbox('Giờ bắt đầu:', range(min_hour, max_hour + 1), index=0, key=f'start_hour_{product_id}')  # Unique key
+    
+    with col2:
+        end_hour = st.selectbox('Giờ kết thúc:', range(min_hour, max_hour + 1), index=max_hour - min_hour, key=f'end_hour_{product_id}')  # Unique key
+    
+    # Lọc bình luận trong khoảng thời gian đã chọn
+    filtered_comments = product_comments[(product_comments['hour'] >= start_hour) & (product_comments['hour'] <= end_hour)]
+
     # Đếm số lượng bình luận theo giờ
-    hourly_counts = product_comments.groupby('hour').size().reset_index(name='count')
+    hourly_counts = filtered_comments.groupby('hour').size().reset_index(name='count')
 
     # Hiển thị bảng thống kê
-    st.write(f"**II. Số lượng bình luận theo giờ cho sản phẩm ID '{product_id}':**")
+    st.write(f"**II. Số lượng bình luận theo giờ từ {start_hour}:00 đến {end_hour}:00 cho sản phẩm ID '{product_id}':**")
 
     # Trực quan hóa bằng matplotlib
     plt.figure(figsize=(10, 5))
-    bars = plt.bar(hourly_counts['hour'], hourly_counts['count'], color='skyblue')
-    plt.xlabel('Khung giờ trong ngày')
-    plt.ylabel('Số lượng bình luận')
-    plt.title(f"Số lượng bình luận theo khung giờ cho sản phẩm ID {product_id}")
-    plt.xticks(hourly_counts['hour'])  # Đảm bảo tất cả các giờ được hiển thị
-    plt.grid(axis='y')
+    if not hourly_counts.empty:
+        bars = plt.bar(hourly_counts['hour'], hourly_counts['count'], color='skyblue')
+        plt.xlabel('Khung giờ trong ngày')
+        plt.ylabel('Số lượng bình luận')
+        plt.title(f"Số lượng bình luận theo khung giờ cho sản phẩm ID {product_id}")
+        plt.xticks(hourly_counts['hour'])  # Đảm bảo tất cả các giờ được hiển thị
+        plt.grid(axis='y')
 
-    # Thêm nhãn số liệu lên từng cột trong biểu đồ
-    for bar in bars:
-        yval = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width() / 2, yval, int(yval), va='bottom')  # va='bottom' để đặt nhãn ở trên cột
+        # Thêm nhãn số liệu lên từng cột trong biểu đồ
+        for bar in bars:
+            yval = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width() / 2, yval, int(yval), va='bottom')  # va='bottom' để đặt nhãn ở trên cột
 
-    # Hiển thị đồ thị trong Streamlit
-    st.pyplot(plt)
+        # Hiển thị đồ thị trong Streamlit
+        st.pyplot(plt)
 
-    # Để người dùng chọn khung giờ
-    selected_hour = st.selectbox('Chọn khung giờ bạn muốn xem bình luận:', hourly_counts['hour'].unique())
+        # Nếu có bình luận trong khoảng thời gian đã chọn, hiển thị chi tiết
+        if not filtered_comments.empty:
+            # st.write(f"**Chi tiết bình luận trong khung giờ từ {start_hour}:00 đến {end_hour}:00:**")
+            # st.dataframe(filtered_comments[['gio_binh_luan', 'noi_dung_binh_luan', 'so_sao']])
 
-    # Lấy bình luận trong khung giờ đã chọn
-    comments_in_selected_hour = product_comments[product_comments['hour'] == selected_hour]
-    
-    if not comments_in_selected_hour.empty:
-        st.write(f"**Chi tiết bình luận vào khung giờ {selected_hour}:**")
-        st.dataframe(comments_in_selected_hour[['gio_binh_luan', 'noi_dung_binh_luan', 'so_sao']])  # Giả sử có các cột cụ thể
+            # Thống kê số lượng bình luận theo đánh giá
+            rating_counts = filtered_comments['so_sao'].value_counts().reindex(range(1, 6), fill_value=0).reset_index()
+            rating_counts.columns = ['so_sao', 'count']
 
-        # Thống kê số lượng bình luận theo đánh giá cho 5 loại đánh giá
-        rating_counts = comments_in_selected_hour['so_sao'].value_counts().reindex(range(1, 6), fill_value=0).reset_index()
-        rating_counts.columns = ['so_sao', 'count']
+            # Hiển thị tổng số lượng bình luận
+            total_comments = filtered_comments.shape[0]
+            st.write(f"**Tổng số bình luận có trong khoảng thời gian đã chọn: {total_comments} bình luận.**")
 
-        # Hiển thị thống kê đánh giá
-        st.write(f"**Thống kê bình luận theo đánh giá cho khung giờ {selected_hour}:**")
-        
-        # Tạo cột trong Streamlit để hiển thị bảng và biểu đồ ngang nhau
-        col1, col2 = st.columns([1, 2])  # Cột 1 (bảng) 1 phần, cột 2 (biểu đồ) 2 phần
+            # Hiển thị thống kê đánh giá
+            st.write(f"**Thống kê bình luận theo đánh giá từ {start_hour}:00 đến {end_hour}:00:**")
+            
+            # Tạo cột trong Streamlit để hiển thị bảng và biểu đồ ngang nhau
+            col1, col2 = st.columns([1, 2])  # Cột 1 (bảng) 1 phần, cột 2 (biểu đồ) 2 phần
 
-        # Hiển thị bảng thống kê trong cột 1
-        with col1:
-            st.dataframe(rating_counts)
+            # Hiển thị bảng thống kê trong cột 1
+            with col1:
+                st.dataframe(rating_counts)
 
-        # Trực quan hóa thống kê đánh giá trong cột 2
-        with col2:
-            plt.figure(figsize=(5, 5))  # Điều chỉnh kích thước của biểu đồ
-            plt.bar(rating_counts['so_sao'].astype(str), rating_counts['count'], color='green')
-            plt.xlabel('Đánh giá')
-            plt.ylabel('Số lượng bình luận')
-            plt.title(f"Số lượng bình luận theo đánh giá vào khung giờ {selected_hour} cho sản phẩm ID {product_id}")
-            plt.xticks(rating_counts['so_sao'].astype(str))  # Đảm bảo tất cả các đánh giá được hiển thị
-            plt.grid(axis='y')
-            st.pyplot(plt)
+            # Trực quan hóa thống kê đánh giá trong cột 2
+            with col2:
+                plt.figure(figsize=(5, 5))  # Điều chỉnh kích thước của biểu đồ
+                plt.bar(rating_counts['so_sao'].astype(str), rating_counts['count'], color='green')
+                plt.xlabel('Đánh giá')
+                plt.ylabel('Số lượng bình luận')
+                plt.title(f"Số lượng bình luận theo đánh giá từ {start_hour}:00 đến {end_hour}:00 cho sản phẩm ID {product_id}")
+                plt.xticks(rating_counts['so_sao'].astype(str))  # Đảm bảo tất cả các đánh giá được hiển thị
+                plt.grid(axis='y')
+                st.pyplot(plt)
 
-        # Để giữ cho chiều cao cột cân bằng, tạo một dòng trống bằng cách sử dụng `st.empty()`.
-        st.empty()  # Giữ không gian cho chiều cao bằng nhau
+            # Tạo tab cho từng loại đánh giá
+            st.write("**Chi tiết bình luận theo đánh giá:**")
+            tabs = st.tabs([f"Đánh giá {i}" for i in range(1, 6)])  # Tạo 5 tab cho các loại đánh giá từ 1 đến 5
+
+            for i in range(1, 6):
+                with tabs[i-1]:
+                    comments_for_rating = filtered_comments[filtered_comments['so_sao'] == i]
+                    if not comments_for_rating.empty:
+                        st.write(f"**Chi tiết bình luận cho đánh giá {i} sao:**")
+                        st.dataframe(comments_for_rating[['gio_binh_luan', 'noi_dung_binh_luan']], use_container_width=True)
+                    else:
+                        st.write(f"Không có bình luận nào cho đánh giá {i} sao.")
+
+            # Để giữ cho chiều cao cột cân bằng, tạo một dòng trống bằng cách sử dụng `st.empty()`.
+            st.empty()
+        else:
+            st.write(f"Không có bình luận nào trong khoảng thời gian từ {start_hour}:00 đến {end_hour}:00.")
     else:
-        st.write(f"Không có bình luận nào vào khung giờ {selected_hour}.")
+        st.write(f"Không có bình luận nào trong khoảng thời gian từ {start_hour}:00 đến {end_hour}:00.")
+
 #------------END_Hàm thống kế số lượng bình luận theo giờ-------------------------------
 
 #------------START_Hàm thống kế số lượng bình luận theo loại sao-------------------------------
@@ -315,8 +310,10 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import streamlit as st
 
+
 def plot_product_comments_wordcloud(df, product_id, stopwords=None):
     """Vẽ Word Cloud cho bình luận của sản phẩm cụ thể với các tab riêng biệt cho từ tích cực và tiêu cực."""
+    
     # Lọc bình luận của sản phẩm cụ thể
     product_comments = df[df['ma_san_pham'] == product_id]['noi_dung_binh_luan']
 
@@ -348,6 +345,9 @@ def plot_product_comments_wordcloud(df, product_id, stopwords=None):
         st.error(f"Không tìm thấy file: {e.filename}. Hãy kiểm tra đường dẫn!")
         return
 
+    # Tạo slider cho số lượng từ hiển thị trong Word Cloud
+    num_words = st.slider("**Chọn số lượng từ hiển thị:**", min_value=1, max_value=100, value=10, key=f'wordcloud_slider_{product_id}')
+
     # Tạo tabs cho wordcloud
     tabs = st.tabs(["Từ Tích Cực", "Từ Tiêu Cực"])
 
@@ -357,7 +357,8 @@ def plot_product_comments_wordcloud(df, product_id, stopwords=None):
         if text:
             wordcloud = WordCloud(width=800, height=400, 
                                   background_color='white', 
-                                  stopwords=stopwords).generate(text)
+                                  stopwords=stopwords, 
+                                  max_words=num_words).generate(text)  # Số từ tối đa hiển thị
             plt.figure(figsize=(10, 5))
             plt.imshow(wordcloud, interpolation='bilinear')
             plt.axis('off')
@@ -381,6 +382,8 @@ def plot_product_comments_wordcloud(df, product_id, stopwords=None):
 
 #------------END_Hàm vẽ wordcloud bình luận theo sản phẩm-------------------------------
 
+
+# ------------START_ Main Streamlit App--------------------
 # Tạo giao diện tìm kiếm sản phẩm
 st.title("Tìm Kiếm Sản Phẩm")
 
@@ -394,16 +397,14 @@ tabs = st.tabs(["Theo sản phẩm", "Theo thương hiệu"])
 
 # Tab 1: Theo sản phẩm
 with tabs[0]:
-    filtered_df = df
-
     # Remove duplicates based on 'ma_san_pham'
-    filtered_df = filtered_df.drop_duplicates(subset='ma_san_pham')
+    filtered_df = df.drop_duplicates(subset='ma_san_pham')
 
     # Display the filtered products in a dropdown
     if not filtered_df.empty:
         # Create a list of products with their codes for selection
         product_list = filtered_df.apply(lambda x: f"{x['ten_san_pham']} (Code: {x['ma_san_pham']})", axis=1).tolist()
-        selected_product = st.selectbox("Vui lòng nhập tên sản phẩm, mã sản phẩm hoặc chọn 1 sản phẩm:", product_list)
+        selected_product = st.selectbox("Vui lòng nhập tên sản phẩm, mã sản phẩm hoặc chọn 1 sản phẩm:", product_list, key='product_selection')
         
         # Extract the selected code from the product string
         selected_code = selected_product.split(" (Code: ")[-1].rstrip(")")
@@ -413,20 +414,20 @@ with tabs[0]:
         # Call the functions to analyze data based on the selected product
         analyze_comments_by_month(danh_gia, selected_code)
         analyze_comments_by_hour(danh_gia, selected_code)
-        plot_star_ratings(danh_gia, selected_code)
+        # plot_star_ratings(danh_gia, selected_code)
         plot_product_comments_wordcloud(danh_gia, selected_code)
 
     else:
-        st.write("Không tìm hấy sản phẩm.")
+        st.write("Không tìm thấy sản phẩm.")
 
 # Tab 2: Theo thương hiệu
 with tabs[1]:
     # Đọc file brand_lst.csv
     brand_df = pd.read_csv('Brand_lst.csv')
-    brands = brand_df['thuong_hieu'].tolist()  # Giả sử cột tên thương hiệu là 'thuong_hieu'
+    brands = brand_df['thuong_hieu'].tolist()
 
     # Dropdown cho lựa chọn thương hiệu
-    selected_brand = st.selectbox("Vui lòng nhập hoặc chọn 1 thương hiệu:", brands)
+    selected_brand = st.selectbox("Vui lòng nhập hoặc chọn 1 thương hiệu:", brands, key='brand_selection')
 
     if selected_brand:
         # Lọc DataFrame sản phẩm theo thương hiệu đã chọn
@@ -459,7 +460,6 @@ with tabs[1]:
             rating_counts = rating_counts.merge(rating_summary[['tong_danh_gia']], on='ma_san_pham', how='left')
 
             # Trực quan hóa số lượng đánh giá
-            import matplotlib.pyplot as plt
             plt.figure(figsize=(10, 5))
             bars = plt.barh(rating_counts['ten_san_pham'], rating_counts['tong_danh_gia'], color='skyblue')
 
@@ -473,25 +473,22 @@ with tabs[1]:
             st.pyplot(plt)
 
             # Gọi chức năng phân tích cho từng sản phẩm nếu cần
-            selected_product_brand = st.selectbox("Chọn sản phẩm để phân tích:", product_list_brands)
+            selected_product_brand = st.selectbox("Chọn sản phẩm để phân tích:", product_list_brands, key='product_brand_selection')
             selected_code_brand = selected_product_brand.split(" (Code: ")[-1].rstrip(")")
 
             st.write("Bạn đã chọn sản phẩm:", selected_product_brand)
             st.write("Mã sản phẩm:", selected_code_brand)
 
-            # Chuyển đổi selected_code_brand về kiểu dữ liệu phù hợp (nếu cần)
-            selected_code_brand = str(selected_code_brand)  # Đảm bảo mã sản phẩm là kiểu str
-
             # Gọi các hàm phân tích dựa trên mã sản phẩm đã chọn
             st.write("Thống kê số lượng bình luận:")
-            tabs = st.tabs(["Tháng","Giờ","Đánh giá"])
+            tabs = st.tabs(["Tháng", "Giờ", "WordCloud"])
             with tabs[0]:
                 analyze_comments_by_month(danh_gia, selected_code_brand)
             with tabs[1]:
                 analyze_comments_by_hour(danh_gia, selected_code_brand)
             with tabs[2]:
-                plot_star_ratings(danh_gia, selected_code_brand)
-                plot_product_comments_wordcloud(danh_gia, selected_code)
+                # plot_star_ratings(danh_gia, selected_code_brand)
+                plot_product_comments_wordcloud(danh_gia, selected_code_brand)
 
 
         else:
