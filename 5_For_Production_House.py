@@ -27,9 +27,9 @@ st.sidebar.success("Ngày báo cáo: /n # 16/12/2024")
 
 # "C:/Users/Windows 10/Documents/Zalo Received Files/GUI_project1_Copy/GUI_project1_Copy/"
 
-san_pham = pd.read_csv('search_termSan_pham.csv')
-danh_gia= pd.read_csv('search_termDanh_gia.csv')
-khach_hang= pd.read_csv('search_termKhach_hang.csv')
+san_pham = pd.read_csv('San_pham.csv')
+danh_gia= pd.read_csv('Danh_gia.csv')
+khach_hang= pd.read_csv('Khach_hang.csv')
 
 # Hàm phân loại dựa trên giá trị của cột 'so_sao'
 def classify_rating(star_rating):
@@ -243,17 +243,17 @@ def plot_product_comments_wordcloud(df, product_id, stopwords=None):
 
     # Lấy các từ tích cực và tiêu cực từ file
     try:
-        with open("search_termpositive_words_VN.txt", 'r', encoding='utf-8') as f:
+        with open("positive_words_VN.txt", 'r', encoding='utf-8') as f:
             positive_words = f.read().splitlines()
         
-        with open("search_termnegative_words_VN.txt", 'r', encoding='utf-8') as f:
+        with open("negative_words_VN.txt", 'r', encoding='utf-8') as f:
             negative_words = f.read().splitlines()
         
         # Lấy stopwords nếu có
         if stopwords is None:
             stopwords = set()  # Khởi tạo với tập rỗng nếu không có stopwords
         
-        with open("search_termvietnamese-stopwords.txt", 'r', encoding='utf-8') as f:
+        with open("vietnamese-stopwords.txt", 'r', encoding='utf-8') as f:
             stopwords.update(f.read().splitlines())
     
     except FileNotFoundError as e:
@@ -334,7 +334,7 @@ with tabs[0]:
 # Tab 2: Theo thương hiệu
 with tabs[1]:
     # Đọc file brand_lst.csv
-    brand_df = pd.read_csv('search_termBrand_lst.csv')
+    brand_df = pd.read_csv('Brand_lst.csv')
     brands = brand_df['thuong_hieu'].tolist()  # Giả sử cột tên thương hiệu là 'thuong_hieu'
 
     # Dropdown cho lựa chọn thương hiệu
