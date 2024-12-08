@@ -46,53 +46,141 @@ danhgia_sanpham = danh_gia.merge(san_pham,on="ma_san_pham", how='left')
 df=danhgia_sanpham.copy()
 
 #------------START_Hàm thống kế số lượng bình luận theo tháng-------------------------------
-def analyze_month_statistics(df, selected_product):
-    """Thống kê số lượng bình luận theo tháng và trực quan hóa trên biểu đồ."""
-    st.write(f"**I. Số lượng bình luận theo tháng cho sản phẩm ID '{selected_product}':**")
+import pandas as pd
+import matplotlib.pyplot as plt
+import streamlit as st
 
-    # Lọc dữ liệu cho sản phẩm cụ thể
-    df = df[df['ma_san_pham'] == selected_product]
+import pandas as pd
+import matplotlib.pyplot as plt
+import streamlit as st
 
-    # Convert 'ngay_binh_luan' to datetime if it's not already
-    df['ngay_binh_luan'] = pd.to_datetime(df['ngay_binh_luan'], dayfirst=True)
+import pandas as pd
+import matplotlib.pyplot as plt
+import streamlit as st
 
-    # Nhóm dữ liệu theo tháng
-    df['month'] = df['ngay_binh_luan'].dt.to_period('M')  # Creates a Period index for month
-    month_count = df.groupby('month').size().reset_index(name='count')
+import pandas as pd
+import matplotlib.pyplot as plt
+import streamlit as st
 
-    # Sort by 'month' column in descending order
-    month_count = month_count.sort_values(by='month', ascending=False)
+import pandas as pd
+import matplotlib.pyplot as plt
+import streamlit as st
 
-    # Lấy tháng có số lượt bình luận nhiều nhất
-    if not month_count.empty:
-        max_count = month_count['count'].max()
-        top_month_row = month_count[month_count['count'] == max_count].iloc[0]
-        st.write(f"Tháng có số lượt đánh giá nhiều nhất: {top_month_row['month']} với {top_month_row['count']} đánh giá.")
+import pandas as pd
+import matplotlib.pyplot as plt
+import streamlit as st
 
-        # Trực quan hóa bằng Matplotlib
-        plt.figure(figsize=(15, 7))
+import pandas as pd
+import matplotlib.pyplot as plt
+import streamlit as st
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import streamlit as st
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import streamlit as st
+
+def analyze_comments_by_month(df, product_id):
+    """Thống kê số lượng bình luận theo tháng cho một sản phẩm."""
+    
+    # Chọn ra bình luận của sản phẩm cụ thể
+    product_comments = df[df['ma_san_pham'] == product_id]
+    
+    # Chuyển đổi cột 'ngay_binh_luan' sang kiểu datetime
+    product_comments['ngay_binh_luan'] = pd.to_datetime(product_comments['ngay_binh_luan'], format='%d/%m/%Y')
+    product_comments['month'] = product_comments['ngay_binh_luan'].dt.to_period('M')  # Lấy tháng và năm
+
+    # Thiết lập tháng bắt đầu và tháng kết thúc với giá trị mặc định là tháng nhỏ nhất và lớn nhất
+    min_month = product_comments['ngay_binh_luan'].min().to_period('M')
+    max_month = product_comments['ngay_binh_luan'].max().to_period('M')
+    
+    st.write("**Chọn khoảng thời gian để xem bình luận:**")
+    
+    # Tạo hai cột cho ô nhập tháng bắt đầu và tháng kết thúc
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        start_month = st.date_input('Tháng bắt đầu:', value=min_month.to_timestamp())
         
-        # Vẽ biểu đồ cột
-        bars = plt.bar(month_count['month'].astype(str), month_count['count'])
-        
-        # Tiêu đề và nhãn
-        plt.title(f'Số lượng bình luận theo tháng - Sản phẩm {selected_product}', fontsize=15)
-        plt.xlabel('Tháng', fontsize=12)
-        plt.ylabel('Số lượng bình luận', fontsize=12)
-        plt.xticks(rotation=45, ha='right')
-        
-        # Thêm số lượng comment lên từng cột
-        for bar in bars:
-            height = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2., height,
-                     f'{int(height)}', 
-                     ha='center', va='bottom', 
-                     fontweight='bold')
-        
-        plt.tight_layout()
-        st.pyplot(plt)
+    with col2:
+        end_month = st.date_input('Tháng kết thúc:', value=max_month.to_timestamp())
+    
+    # Chuyển đổi đến định dạng Timestamp để sử dụng với to_period
+    start_period = pd.to_datetime(start_month).to_period('M')
+    end_period = pd.to_datetime(end_month).to_period('M')
+
+    # Lọc bình luận trong khoảng thời gian đã chọn
+    filtered_comments = product_comments[(product_comments['month'] >= start_period) & (product_comments['month'] <= end_period)]
+
+    # Đếm số lượng bình luận theo tháng
+    monthly_counts = filtered_comments.groupby('month').size().reset_index(name='count')
+    
+    # Hiển thị bảng thống kê
+    st.write(f"**II. Số lượng bình luận theo tháng từ {start_period} đến {end_period} cho sản phẩm ID '{product_id}':**")
+
+    # Trực quan hóa bằng matplotlib
+    plt.figure(figsize=(10, 5))
+    bars = plt.bar(monthly_counts['month'].astype(str), monthly_counts['count'], color='skyblue')
+    plt.xlabel('Tháng')
+    plt.ylabel('Số lượng bình luận')
+    plt.title(f"Số lượng bình luận theo tháng cho sản phẩm ID {product_id}")
+    plt.xticks(rotation=45)  # Xoay tiêu đề trục hoành
+    plt.grid(axis='y')
+
+    # Thêm nhãn số liệu lên từng cột trong biểu đồ
+    for bar in bars:
+        yval = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width() / 2, yval, int(yval), va='bottom')  # va='bottom' để đặt nhãn ở trên cột
+
+    # Hiển thị đồ thị trong Streamlit
+    st.pyplot(plt)
+
+    if not monthly_counts.empty:
+        # Lọc bình luận theo đánh giá
+        rating_counts = filtered_comments['so_sao'].value_counts().reindex(range(1, 6), fill_value=0).reset_index()
+        rating_counts.columns = ['so_sao', 'count']
+    
+        # Hiển thị thống kê đánh giá
+        st.write(f"**Thống kê bình luận theo đánh giá trong khoảng thời gian từ {start_month} đến {end_month}:**")
+    
+        # Tạo cột trong Streamlit để hiển thị bảng và biểu đồ ngang nhau
+        col1, col2 = st.columns([1, 2])  # Cột 1 (bảng) 1 phần, cột 2 (biểu đồ) 2 phần
+    
+        # Hiển thị bảng thống kê trong cột 1
+        with col1:
+            st.dataframe(rating_counts)
+    
+        # Trực quan hóa thống kê đánh giá trong cột 2
+        with col2:
+            plt.figure(figsize=(5, 5))  # Điều chỉnh kích thước của biểu đồ
+            plt.bar(rating_counts['so_sao'].astype(str), rating_counts['count'], color='green')
+            plt.xlabel('Đánh giá')
+            plt.ylabel('Số lượng bình luận')
+            plt.title(f"Số lượng bình luận theo đánh giá từ {start_month} đến {end_month} cho sản phẩm ID {product_id}")
+            plt.xticks(rating_counts['so_sao'].astype(str))  # Đảm bảo tất cả các đánh giá được hiển thị
+            plt.grid(axis='y')
+            st.pyplot(plt)
+    
+        # Tạo tab cho từng loại đánh giá
+        st.write("**Chi tiết bình luận theo đánh giá:**")
+        tabs = st.tabs([f"Đánh giá {i}" for i in range(1, 6)])  # Tạo 5 tab cho các loại đánh giá từ 1 đến 5
+
+        for i in range(1, 6):
+            with tabs[i-1]:
+                comments_for_rating = filtered_comments[filtered_comments['so_sao'] == i]
+                if not comments_for_rating.empty:
+                    st.write(f"**Chi tiết bình luận cho đánh giá {i}:**")
+                    st.dataframe(comments_for_rating[['ngay_binh_luan', 'noi_dung_binh_luan']])
+                else:
+                    st.write(f"Không có bình luận nào cho đánh giá {i}.")
+    
+        # Để giữ cho chiều cao cột cân bằng, tạo một dòng trống bằng cách sử dụng `st.empty()`.
+        st.empty()  # Giữ không gian cho chiều cao bằng nhau
     else:
-        st.write("Không có bình luận nào.")
+        st.write(f"Không có bình luận nào trong khoảng thời gian từ {start_period} đến {end_period}.")
+
 #------------END_Hàm thống kế số lượng bình luận theo tháng-------------------------------
 
 #------------START_Hàm thống kế số lượng bình luận theo giờ-------------------------------
@@ -323,7 +411,7 @@ with tabs[0]:
         st.write("Mã sản phẩm:", selected_code)
 
         # Call the functions to analyze data based on the selected product
-        analyze_month_statistics(danh_gia, selected_code)
+        analyze_comments_by_month(danh_gia, selected_code)
         analyze_comments_by_hour(danh_gia, selected_code)
         plot_star_ratings(danh_gia, selected_code)
         plot_product_comments_wordcloud(danh_gia, selected_code)
@@ -398,7 +486,7 @@ with tabs[1]:
             st.write("Thống kê số lượng bình luận:")
             tabs = st.tabs(["Tháng","Giờ","Đánh giá"])
             with tabs[0]:
-                analyze_month_statistics(danh_gia, selected_code_brand)
+                analyze_comments_by_month(danh_gia, selected_code_brand)
             with tabs[1]:
                 analyze_comments_by_hour(danh_gia, selected_code_brand)
             with tabs[2]:
