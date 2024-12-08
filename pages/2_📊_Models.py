@@ -10,7 +10,7 @@ st.sidebar.success("Giáo Viên Hướng Dẫn: \n # KHUẤT THUỲ PHƯƠNG")
 st.sidebar.success("Học Viên:\n # NGUYỄN CHẤN NAM \n # CHẾ THỊ ANH TUYỀN")
 st.sidebar.success("Ngày báo cáo: \n # 16/12/2024")
 
-################################
+################################ MODEL COMPARISION
 
 # Đọc dữ liệu từ file JSON
 output_file = 'model_results.json'
@@ -78,7 +78,7 @@ except Exception as e:
     st.error(f"Đã xảy ra lỗi khi đọc file JSON: {e}")
 
 
-
+######## VẼ ROC CUVER
 try:
     with open(output_file, 'r') as json_file:
         results = json.load(json_file)
@@ -115,3 +115,5 @@ except FileNotFoundError:
     st.error(f"Không tìm thấy file '{output_file}'. Vui lòng kiểm tra lại đường dẫn file.")
 except Exception as e:
     st.error(f"Đã xảy ra lỗi khi đọc file JSON hoặc vẽ ROC Curve: {e}")
+
+st.markdown("## Dựa số liệu ở trên, chọn model SVM")
