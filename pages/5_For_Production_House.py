@@ -1,11 +1,15 @@
 import streamlit as st
-# import time
+import string
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from wordcloud import WordCloud
 from collections import Counter
+import underthesea
+from underthesea import word_tokenize, pos_tag, sent_tokenize
+import re
+import regex
 
 # Cho 3 file csv nhu sau:
 
@@ -31,6 +35,170 @@ st.sidebar.success("Ngày báo cáo: /n # 16/12/2024")
 san_pham = pd.read_csv('San_pham.csv')
 danh_gia= pd.read_csv('Danh_gia.csv')
 khach_hang= pd.read_csv('Khach_hang.csv')
+
+################ START_ Tien xu ly cot noi_dung_binh_luan #####################
+
+# #LOAD EMOJICON
+# file = open('emojicon.txt', 'r', encoding="utf8")
+# emoji_lst = file.read().split('\n')
+# emoji_dict = {}
+# for line in emoji_lst:
+#     key, value = line.split('\t')
+#     emoji_dict[key] = str(value)
+# file.close()
+# #################
+# #LOAD TEENCODE
+# file = open('teencode.txt', 'r', encoding="utf8")
+# teen_lst = file.read().split('\n')
+# teen_dict = {}
+# for line in teen_lst:
+#     key, value = line.split('\t')
+#     teen_dict[key] = str(value)
+# file.close()
+
+# with open("teencode.txt", 'r', encoding='utf-8') as file:
+#     for line in file:
+#         line = line.strip()  # Loại bỏ khoảng trắng ở đầu và cuối dòng
+#         if line:  # Chỉ thực hiện nếu dòng không trống
+#             try:
+#                 key, value = line.split('\t')
+#                 # Tiến hành xử lý key và value ở đây
+#             except ValueError:
+#                 print(f'Line has an unexpected format: {line}')
+# ###############
+# #LOAD TRANSLATE ENGLISH -> VNMESE
+# file = open('english-vnmese.txt', 'r', encoding="utf8")
+# english_lst = file.read().split('\n')
+# english_dict = {}
+# for line in english_lst:
+#     key, value = line.split('\t')
+#     english_dict[key] = str(value)
+# file.close()
+# ################
+# #LOAD wrong words
+# file = open('wrong-word.txt', 'r', encoding="utf8")
+# wrong_lst = file.read().split('\n')
+# file.close()
+# #################
+# #LOAD STOPWORDS
+# file = open('vietnamese-stopwords.txt', 'r', encoding="utf8")
+# stopwords_lst = file.read().split('\n')
+# file.close()
+
+# def process_text(text, emoji_dict, teen_dict, wrong_lst):
+#     document = text.lower()
+#     document = document.replace("’",'')
+#     document = regex.sub(r'\.+', ".", document)
+#     new_sentence =''
+#     for sentence in sent_tokenize(document):
+#         # if not(sentence.isascii()):
+#         ###### CONVERT EMOJICON
+#         sentence = ''.join(emoji_dict[word]+' ' if word in emoji_dict else word for word in list(sentence))
+#         ###### CONVERT TEENCODE
+#         sentence = ' '.join(teen_dict[word] if word in teen_dict else word for word in sentence.split())
+#         ###### DEL Punctuation & Numbers
+#         pattern = r'(?i)\b[a-záàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệóòỏõọôốồổỗộơớờởỡợíìỉĩịúùủũụưứừửữựýỳỷỹỵđ]+\b'
+#         sentence = ' '.join(regex.findall(pattern,sentence))
+#         # ...
+#         ###### DEL wrong words
+#         sentence = ' '.join('' if word in wrong_lst else word for word in sentence.split())
+#         new_sentence = new_sentence+ sentence + '. '
+#     document = new_sentence
+#     #print(document)
+#     ###### DEL excess blank space
+#     document = regex.sub(r'\s+', ' ', document).strip()
+#     #...
+#     return document
+
+
+# # Chuẩn hóa unicode tiếng việt
+# def loaddicchar():
+#     uniChars = "àáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệđìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵÀÁẢÃẠÂẦẤẨẪẬĂẰẮẲẴẶÈÉẺẼẸÊỀẾỂỄỆĐÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴÂĂĐÔƠƯ"
+#     unsignChars = "aaaaaaaaaaaaaaaaaeeeeeeeeeeediiiiiooooooooooooooooouuuuuuuuuuuyyyyyAAAAAAAAAAAAAAAAAEEEEEEEEEEEDIIIOOOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYYAADOOU"
+
+#     dic = {}
+#     char1252 = 'à|á|ả|ã|ạ|ầ|ấ|ẩ|ẫ|ậ|ằ|ắ|ẳ|ẵ|ặ|è|é|ẻ|ẽ|ẹ|ề|ế|ể|ễ|ệ|ì|í|ỉ|ĩ|ị|ò|ó|ỏ|õ|ọ|ồ|ố|ổ|ỗ|ộ|ờ|ớ|ở|ỡ|ợ|ù|ú|ủ|ũ|ụ|ừ|ứ|ử|ữ|ự|ỳ|ý|ỷ|ỹ|ỵ|À|Á|Ả|Ã|Ạ|Ầ|Ấ|Ẩ|Ẫ|Ậ|Ằ|Ắ|Ẳ|Ẵ|Ặ|È|É|Ẻ|Ẽ|Ẹ|Ề|Ế|Ể|Ễ|Ệ|Ì|Í|Ỉ|Ĩ|Ị|Ò|Ó|Ỏ|Õ|Ọ|Ồ|Ố|Ổ|Ỗ|Ộ|Ờ|Ớ|Ở|Ỡ|Ợ|Ù|Ú|Ủ|Ũ|Ụ|Ừ|Ứ|Ử|Ữ|Ự|Ỳ|Ý|Ỷ|Ỹ|Ỵ'.split(
+#         '|')
+#     charutf8 = "à|á|ả|ã|ạ|ầ|ấ|ẩ|ẫ|ậ|ằ|ắ|ẳ|ẵ|ặ|è|é|ẻ|ẽ|ẹ|ề|ế|ể|ễ|ệ|ì|í|ỉ|ĩ|ị|ò|ó|ỏ|õ|ọ|ồ|ố|ổ|ỗ|ộ|ờ|ớ|ở|ỡ|ợ|ù|ú|ủ|ũ|ụ|ừ|ứ|ử|ữ|ự|ỳ|ý|ỷ|ỹ|ỵ|À|Á|Ả|Ã|Ạ|Ầ|Ấ|Ẩ|Ẫ|Ậ|Ằ|Ắ|Ẳ|Ẵ|Ặ|È|É|Ẻ|Ẽ|Ẹ|Ề|Ế|Ể|Ễ|Ệ|Ì|Í|Ỉ|Ĩ|Ị|Ò|Ó|Ỏ|Õ|Ọ|Ồ|Ố|Ổ|Ỗ|Ộ|Ờ|Ớ|Ở|Ỡ|Ợ|Ù|Ú|Ủ|Ũ|Ụ|Ừ|Ứ|Ử|Ữ|Ự|Ỳ|Ý|Ỷ|Ỹ|Ỵ".split(
+#         '|')
+#     for i in range(len(char1252)):
+#         dic[char1252[i]] = charutf8[i]
+#     return dic
+
+# # Đưa toàn bộ dữ liệu qua hàm này để chuẩn hóa lại
+# def covert_unicode(txt):
+#     dicchar = loaddicchar()
+#     return regex.sub(
+#         r'à|á|ả|ã|ạ|ầ|ấ|ẩ|ẫ|ậ|ằ|ắ|ẳ|ẵ|ặ|è|é|ẻ|ẽ|ẹ|ề|ế|ể|ễ|ệ|ì|í|ỉ|ĩ|ị|ò|ó|ỏ|õ|ọ|ồ|ố|ổ|ỗ|ộ|ờ|ớ|ở|ỡ|ợ|ù|ú|ủ|ũ|ụ|ừ|ứ|ử|ữ|ự|ỳ|ý|ỷ|ỹ|ỵ|À|Á|Ả|Ã|Ạ|Ầ|Ấ|Ẩ|Ẫ|Ậ|Ằ|Ắ|Ẳ|Ẵ|Ặ|È|É|Ẻ|Ẽ|Ẹ|Ề|Ế|Ể|Ễ|Ệ|Ì|Í|Ỉ|Ĩ|Ị|Ò|Ó|Ỏ|Õ|Ọ|Ồ|Ố|Ổ|Ỗ|Ộ|Ờ|Ớ|Ở|Ỡ|Ợ|Ù|Ú|Ủ|Ũ|Ụ|Ừ|Ứ|Ử|Ữ|Ự|Ỳ|Ý|Ỷ|Ỹ|Ỵ',
+#         lambda x: dicchar[x.group()], txt)
+
+
+# def process_special_word(text):
+#     # có thể có nhiều từ đặc biệt cần ráp lại với nhau
+#     new_text = ''
+#     text_lst = text.split()
+#     i= 0
+#     # không, chẳng, chả...
+#     if 'không' in text_lst:
+#         while i <= len(text_lst) - 1:
+#             word = text_lst[i]
+#             #print(word)
+#             #print(i)
+#             if  word == 'không':
+#                 next_idx = i+1
+#                 if next_idx <= len(text_lst) -1:
+#                     word = word +'_'+ text_lst[next_idx]
+#                 i= next_idx + 1
+#             else:
+#                 i = i+1
+#             new_text = new_text + word + ' '
+#     else:
+#         new_text = text
+#     return new_text.strip()
+
+# # Hàm để chuẩn hóa các từ có ký tự lặp
+# def normalize_repeated_characters(text):
+#     # Thay thế mọi ký tự lặp liên tiếp bằng một ký tự đó
+#     # Ví dụ: "lònggggg" thành "lòng", "thiệtttt" thành "thiệt"
+#     return re.sub(r'(.)\1+', r'\1', text)
+
+
+def find_words(document, list_of_words):
+    document_lower = document.lower()
+    word_count = 0
+    word_list = []
+
+    for word in list_of_words:
+        if word in document_lower:
+            print(word)
+            word_count += document_lower.count(word)
+            word_list.append(word)
+
+    return word_count, word_list
+
+# def apply_processing(value):
+#     # Kiểm tra xem giá trị có phải là chuỗi không
+#     if isinstance(value, str):  # Chỉ xử lý nếu value là string
+#         # Chuyển đổi unicode
+#         text = covert_unicode(value)
+        
+#         # Xử lý từ đặc biệt
+#         text = process_special_word(text)
+        
+#         # Chuẩn hóa các ký tự lặp
+#         text = normalize_repeated_characters(text)
+        
+#         # Xử lý văn bản
+#         text = process_text(text, emoji_dict, teen_dict, wrong_lst)
+        
+#         return text
+#     else:
+#         # Nếu không phải chuỗi, có thể trả về giá trị mặc định hoặc None
+#         return ''  
+
+
+
+################ END_Tien xu ly cot noi_dung_binh_luan #####################
 
 # Hàm phân loại dựa trên giá trị của cột 'so_sao'
 def classify_rating(star_rating):
@@ -306,32 +474,95 @@ def plot_star_ratings(danh_gia, user_input_int):
 #------------END_Hàm thống kế số lượng bình luận theo loại sao-------------------------------
 
 #------------START_Hàm vẽ wordcloud bình luận theo sản phẩm-------------------------------
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
-import streamlit as st
+
+# def plot_product_comments_wordcloud(df, product_id, stopwords=None):
+#     """Vẽ Word Cloud cho bình luận của sản phẩm cụ thể với các tab riêng biệt cho từ tích cực và tiêu cực."""
+    
+#     # Lọc bình luận của sản phẩm cụ thể
+#     product_comments = df[df['ma_san_pham'] == product_id]['noi_dung_binh_luan']
+
+#     # Chuyển đổi bình luận thành chuỗi, loại bỏ NaN
+#     product_comments = product_comments.dropna()  # Bỏ NaN
+
+#     # Đảm bảo mỗi phần tử đều là kiểu str
+#     product_comments = product_comments.astype(str).tolist()
+
+#     # Kết hợp các bình luận thành một chuỗi
+#     all_comments_text = " ".join(product_comments)
+
+#     # Lấy các từ tích cực và tiêu cực từ file
+#     try:
+#         with open("positive_words_VN.txt", 'r', encoding='utf-8') as f:
+#             positive_words = f.read().splitlines()
+        
+#         with open("negative_words_VN.txt", 'r', encoding='utf-8') as f:
+#             negative_words = f.read().splitlines()
+        
+#         # Lấy stopwords nếu có
+#         if stopwords is None:
+#             stopwords = set()  # Khởi tạo với tập rỗng nếu không có stopwords
+        
+#         with open("vietnamese-stopwords.txt", 'r', encoding='utf-8') as f:
+#             stopwords.update(f.read().splitlines())
+    
+#     except FileNotFoundError as e:
+#         st.error(f"Không tìm thấy file: {e.filename}. Hãy kiểm tra đường dẫn!")
+#         return
+
+#     # Tạo slider cho số lượng từ hiển thị trong Word Cloud
+#     num_words = st.slider("**Chọn số lượng từ hiển thị:**", min_value=1, max_value=100, value=10, key=f'wordcloud_slider_{product_id}')
+
+#     # Tạo tabs cho wordcloud
+#     tabs = st.tabs(["Từ Tích Cực", "Từ Tiêu Cực"])
+
+#     # Tạo hàm để vẽ Word Cloud từ chuỗi văn bản
+#     def create_wordcloud(text):
+#         # Kiểm tra nếu văn bản không rỗng
+#         if text:
+#             wordcloud = WordCloud(width=800, height=400, 
+#                                   background_color='white', 
+#                                   stopwords=stopwords, 
+#                                   max_words=num_words).generate(text)  # Số từ tối đa hiển thị
+#             plt.figure(figsize=(10, 5))
+#             plt.imshow(wordcloud, interpolation='bilinear')
+#             plt.axis('off')
+#             st.pyplot(plt)
+#         else:
+#             st.write("Không có dữ liệu để hiển thị Word Cloud.")
+
+#     # Tạo Word Cloud cho từ tích cực trong tab Từ Tích Cực
+#     with tabs[0]:
+#         st.subheader("Word Cloud cho Từ Tích Cực")
+#         positive_text = " ".join([word for word in all_comments_text.split() 
+#                                    if word in positive_words and word not in stopwords])
+#         create_wordcloud(positive_text)
+
+#     # Tạo Word Cloud cho từ tiêu cực trong tab Từ Tiêu Cực
+#     with tabs[1]:
+#         st.subheader("Word Cloud cho Từ Tiêu Cực")
+#         negative_text = " ".join([word for word in all_comments_text.split() 
+#                                    if word in negative_words and word not in stopwords])
+#         create_wordcloud(negative_text)
 
 
+#####try 
 def plot_product_comments_wordcloud(df, product_id, stopwords=None):
     """Vẽ Word Cloud cho bình luận của sản phẩm cụ thể với các tab riêng biệt cho từ tích cực và tiêu cực."""
     
     # Lọc bình luận của sản phẩm cụ thể
     product_comments = df[df['ma_san_pham'] == product_id]['noi_dung_binh_luan']
 
-    # Chuyển đổi bình luận thành chuỗi, loại bỏ NaN
-    product_comments = product_comments.dropna()  # Bỏ NaN
+    # Chuyển đổi bình luận thành danh sách, loại bỏ NaN
+    product_comments = product_comments.dropna().astype(str).tolist()
 
-    # Đảm bảo mỗi phần tử đều là kiểu str
-    product_comments = product_comments.astype(str).tolist()
 
-    # Kết hợp các bình luận thành một chuỗi
-    all_comments_text = " ".join(product_comments)
 
     # Lấy các từ tích cực và tiêu cực từ file
     try:
-        with open("positive_words_VN.txt", 'r', encoding='utf-8') as f:
+        with open("positive_words.txt", 'r', encoding='utf-8') as f:
             positive_words = f.read().splitlines()
         
-        with open("negative_words_VN.txt", 'r', encoding='utf-8') as f:
+        with open("negative_words.txt", 'r', encoding='utf-8') as f:
             negative_words = f.read().splitlines()
         
         # Lấy stopwords nếu có
@@ -369,19 +600,60 @@ def plot_product_comments_wordcloud(df, product_id, stopwords=None):
     # Tạo Word Cloud cho từ tích cực trong tab Từ Tích Cực
     with tabs[0]:
         st.subheader("Word Cloud cho Từ Tích Cực")
-        positive_text = " ".join([word for word in all_comments_text.split() 
-                                   if word in positive_words and word not in stopwords])
+        positive_words_in_comments = []
+        for comment in product_comments:
+            words = comment.split()
+            # Lấy các từ tích cực không nằm trong stopwords
+            positive_words_in_comments.extend([word for word in words if word in positive_words and word not in stopwords])
+        
+        positive_text = " ".join(positive_words_in_comments)
         create_wordcloud(positive_text)
 
     # Tạo Word Cloud cho từ tiêu cực trong tab Từ Tiêu Cực
     with tabs[1]:
         st.subheader("Word Cloud cho Từ Tiêu Cực")
-        negative_text = " ".join([word for word in all_comments_text.split() 
-                                   if word in negative_words and word not in stopwords])
+        negative_words_in_comments = []
+        for comment in product_comments:
+            words = comment.split()
+            # Lấy các từ tiêu cực không nằm trong stopwords
+            negative_words_in_comments.extend([word for word in words if word in negative_words and word not in stopwords])
+        
+        negative_text = " ".join(negative_words_in_comments)
         create_wordcloud(negative_text)
 
 #------------END_Hàm vẽ wordcloud bình luận theo sản phẩm-------------------------------
 
+# ------------START_Hàm chuyển đổi đơn vị tiền tệ VND--------------------
+# Function to format numbers to Vietnamese currency
+def format_currency(value):
+    return f"{value:,.0f} VND"
+# ------------END_Hàm chuyển đổi đơn vị tiền tệ VND--------------------
+
+
+# Hàm để xác định giá trị của cột dong_san_pham
+def assign_dong_san_pham(ten_san_pham):
+    for product in dong_san_pham_list:
+        if product in ten_san_pham:
+            return product
+    return 'Khac'
+
+
+# Hàm để xác định giá trị của cột thuong_hieu
+# Đọc danh sách thương hiệu từ file CSV
+brand_df = pd.read_csv('Brand_lst.csv')
+brands = brand_df['thuong_hieu'].tolist()
+def assign_thuong_hieu(ten_san_pham):
+    for brand in brands:
+        if brand in ten_san_pham:
+            return brand
+    return 'Khac'
+
+# ------------START_Hàm để thống kê số lượng đánh giá theo thương hiệu và loại đánh giá--------------------
+def analyze_product_reviews(df, selected_brands, review_type):
+    filtered_df = df[df['thuong_hieu'].isin(selected_brands)]
+    review_counts = filtered_df[filtered_df['so_sao'] == review_type].groupby('thuong_hieu').size()
+    return review_counts
+# ------------END_Hàm để thống kê số lượng đánh giá theo thương hiệu và loại đánh giá--------------------
 
 # ------------START_ Main Streamlit App--------------------
 # Tạo giao diện tìm kiếm sản phẩm
@@ -393,7 +665,7 @@ df['ten_san_pham'] = df['ten_san_pham'].astype(str)
 danh_gia['ma_san_pham'] = danh_gia['ma_san_pham'].astype(str)
 
 # Tạo hai tab: "Theo sản phẩm" và "Theo thương hiệu"
-tabs = st.tabs(["Theo sản phẩm", "Theo thương hiệu"])
+tabs = st.tabs(["Theo sản phẩm", "Theo từng thương hiệu", "Theo nhiều thương hiệu"])
 
 # Tab 1: Theo sản phẩm
 with tabs[0]:
@@ -408,19 +680,43 @@ with tabs[0]:
         
         # Extract the selected code from the product string
         selected_code = selected_product.split(" (Code: ")[-1].rstrip(")")
+        selected_row = filtered_df[filtered_df['ma_san_pham'] == selected_code].iloc[0]
+
+        # Display the selected product information
         st.write("Bạn đã chọn:", selected_product)
         st.write("Mã sản phẩm:", selected_code)
 
+
+        # Use columns to display product description and image side by side
+        col1, col2 = st.columns([2, 1.5])  # Adjust the weights as needed
+
+        with col1:
+            # Display product image
+            # image_url = selected_row['hinh_anh']  # Ensure you have a column with image URLs
+            image_url = 'https://media.hcdn.vn/catalog/product/p/r/promotions-auto-nuoc-hoa-hong-khong-mui-klairs-danh-cho-da-nhay-cam-180ml_mcaFpgMJ17XnfQwS.png'
+            st.image(image_url, caption=selected_row['ten_san_pham'])
+
+        with col2:
+            # Display product description
+            # Format and display product price and average rating
+            formatted_price = format_currency(selected_row['gia_ban'])
+            st.markdown(f"<h4>Giá bán: {formatted_price}</h4>", unsafe_allow_html=True)
+            st.markdown(f"<h4>Điểm trung bình: {selected_row['diem_trung_binh']}</h4>", unsafe_allow_html=True)
+
         # Call the functions to analyze data based on the selected product
+        # tabs = st.tabs(['Tháng', 'Giờ', 'WordCloud'])
+        # with tabs[0]:
         analyze_comments_by_month(danh_gia, selected_code)
+        # with tabs[1]:   
         analyze_comments_by_hour(danh_gia, selected_code)
         # plot_star_ratings(danh_gia, selected_code)
+        # with tabs[2]:
         plot_product_comments_wordcloud(danh_gia, selected_code)
 
     else:
         st.write("Không tìm thấy sản phẩm.")
 
-# Tab 2: Theo thương hiệu
+# Tab 2: Theo từng thương hiệu
 with tabs[1]:
     # Đọc file brand_lst.csv
     brand_df = pd.read_csv('Brand_lst.csv')
@@ -490,6 +786,157 @@ with tabs[1]:
                 # plot_star_ratings(danh_gia, selected_code_brand)
                 plot_product_comments_wordcloud(danh_gia, selected_code_brand)
 
+                #################
+                
+                # def generate_wordcloud_and_top_words(text, stopwords=None, slider_key="slider"):
+                #     """
+                #     Tạo Word Cloud và trả về từ điển chứa các từ phổ biến nhất.
+                #     """
+                #     # Tính tần suất từ
+                #     words = text.split()
+                #     word_counts = Counter(words)
+
+                #     # Loại bỏ stopwords (nếu có)
+                #     if stopwords:
+                #         word_counts = Counter({word: count for word, count in word_counts.items() if word not in stopwords})
+
+                #     # Chỉ giữ lại các từ phổ biến nhất thông qua slider (thêm key để tránh lỗi)
+                #     num_words = st.slider("Chọn số lượng từ phổ biến để hiển thị", min_value=5, max_value=50, value=10, step=1, key=slider_key)
+                #     top_words = word_counts.most_common(num_words)
+                #     top_words_dict = dict(top_words)
+
+                #     # Trả về Word Cloud và danh sách top từ phổ biến
+                #     wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(top_words_dict)
+                #     return wordcloud, top_words
+
+
+                # # POSITIVE
+                # st.subheader("Word Cloud và Top Từ POSITIVE Phổ Biến")
+
+                # try:
+                #     with open("positive_words.txt", 'r', encoding='utf-8') as f:
+                #         text_positive = f.read()
+                # except FileNotFoundError:
+                #     st.error("Không tìm thấy file 'positive_words.txt'.")
+
+                # # Gọi hàm và chia tab
+                # wordcloud_positive, top_words_positive = generate_wordcloud_and_top_words(text_positive, slider_key="slider_positive")
+                # tab1_positive, tab2_positive = st.tabs(["Word Cloud POSITIVE", "Top Từ Phổ Biến POSITIVE"])
+
+                # with tab1_positive:
+                #     st.write("### Word Cloud POSITIVE")
+                #     fig, ax = plt.subplots(figsize=(10, 5))
+                #     ax.imshow(wordcloud_positive, interpolation='bilinear')
+                #     ax.axis('off')
+                #     st.pyplot(fig)
+
+                # with tab2_positive:
+                #     st.write("### Top Từ POSITIVE Phổ Biến")
+                #     for word, count in top_words_positive:
+                #         st.write(f"{word}: {count}")
+
+                # # NEGATIVE
+                # st.subheader("Word Cloud và Top Từ NEGATIVE Phổ Biến")
+
+                # try:
+                #     with open("negative_words_VN.txt", 'r', encoding='utf-8') as f:
+                #         text_negative = f.read()
+                # except FileNotFoundError:
+                #     st.error("Không tìm thấy file 'negative_words_VN.txt'.")
+
+                # # Gọi hàm và chia tab
+                # wordcloud_negative, top_words_negative = generate_wordcloud_and_top_words(text_negative, slider_key="slider_negative")
+                # tab1_negative, tab2_negative = st.tabs(["Word Cloud NEGATIVE", "Top Từ Phổ Biến NEGATIVE"])
+
+                # with tab1_negative:
+                #     st.write("### Word Cloud NEGATIVE")
+                #     fig, ax = plt.subplots(figsize=(10, 5))
+                #     ax.imshow(wordcloud_negative, interpolation='bilinear')
+                #     ax.axis('off')
+                #     st.pyplot(fig)
+
+                # with tab2_negative:
+                #     st.write("### Top Từ NEGATIVE Phổ Biến")
+                #     for word, count in top_words_negative:
+                #         st.write(f"{word}: {count}")
 
         else:
             st.write("Không tìm thấy sản phẩm cho thương hiệu này.")
+
+# Tab 3: Theo nhiều thương hiệu
+with tabs[2]:
+    # Cấu hình Streamlit
+    st.title('Thống kê Đánh giá Sản phẩm theo Thương hiệu')
+
+    # Đọc danh sách dòng sản phẩm từ file
+    with open("Dong_san_pham.txt", "r", encoding="utf-8") as file:
+        dong_san_pham_list = [line.strip() for line in file.readlines()]
+
+    # Tạo cột dong_san_pham với giá trị mặc định là "Khac"
+    df['dong_san_pham'] = 'Khac'
+    
+    # Áp dụng hàm cho cột ten_san_pham
+    df['dong_san_pham'] = df['ten_san_pham'].str.lower().apply(assign_dong_san_pham)
+
+    # Tạo cột thuong_hieu với giá trị mặc định là "Khac"
+    df['thuong_hieu'] = 'Khac'
+
+    # Áp dụng hàm cho cột ten_san_pham
+    df['thuong_hieu'] = df['ten_san_pham'].apply(assign_thuong_hieu)
+
+    # Chọn dòng sản phẩm từ danh sách
+    selected_dong_san_pham = st.multiselect('Chọn Dòng Sản Phẩm:', dong_san_pham_list)
+
+    # Lọc DataFrame để lấy các thương hiệu có dòng sản phẩm đã chọn
+    if selected_dong_san_pham:
+        filtered_brands = df[df['dong_san_pham'].isin(selected_dong_san_pham)]['thuong_hieu'].unique().tolist()
+    else:
+        filtered_brands = []
+
+    # Chọn thương hiệu từ danh sách đã lọc
+    selected_brands = st.multiselect('Chọn Thương hiệu:', filtered_brands)
+
+    # Chọn loại đánh giá
+    review_types = df['so_sao'].unique()  # Giả sử bạn có cột loại đánh giá trong df
+    selected_review_types = st.multiselect('Chọn Loại Đánh giá:', review_types)
+
+    # Nút để thực hiện phân tích
+    if st.button('Thống kê'):
+        if selected_brands and selected_dong_san_pham:
+            filtered_df = df[df['dong_san_pham'].isin(selected_dong_san_pham)]
+            filtered_df = filtered_df[filtered_df['thuong_hieu'].isin(selected_brands)]
+
+            # Loại bỏ giá trị NaN trong cột 'so_sao'
+            filtered_df = filtered_df[filtered_df['so_sao'].notnull()]
+
+            # Nhóm và đếm số lượng đánh giá cho mỗi thương hiệu theo loại đánh giá
+            review_counts = filtered_df[filtered_df['so_sao'].isin(selected_review_types)].groupby(['thuong_hieu', 'so_sao']).size().unstack(fill_value=0)
+
+            # Hiển thị kết quả
+            if not review_counts.empty:
+                st.write(f'Số lượng đánh giá cho các loại **{", ".join(map(str, selected_review_types))}**:')
+                
+                # Vẽ biểu đồ cột
+                plt.figure(figsize=(10, 6))
+                ax = review_counts.plot(kind='bar', width=0.8)
+
+                # Thêm số lượng bình luận vào các thanh biểu đồ
+                for container in ax.containers:
+                    for bar in container:
+                        height = bar.get_height()
+                        ax.annotate(f'{height}', 
+                                    xy=(bar.get_x() + bar.get_width() / 2, height), 
+                                    xytext=(0, 3),  # 3 points vertical offset
+                                    textcoords='offset points',
+                                    ha='center', va='bottom')
+
+                plt.title('Số lượng Đánh giá theo Thương hiệu và Loại Đánh giá')
+                plt.xlabel('Thương hiệu')
+                plt.ylabel('Số lượng Đánh giá')
+                plt.xticks(rotation=45)
+                plt.legend(title='Loại Đánh giá')
+                st.pyplot(plt)  # Hiển thị biểu đồ trong Streamlit
+            else:
+                st.write('Không có dữ liệu đánh giá cho thương hiệu hoặc dòng sản phẩm đã chọn.')
+        else:
+            st.write('Vui lòng chọn ít nhất một thương hiệu và một dòng sản phẩm.')
