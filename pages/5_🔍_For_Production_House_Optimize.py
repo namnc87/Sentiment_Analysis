@@ -790,7 +790,7 @@ with main_tabs[1]:
                                 st.write(f"**{row.ten_san_pham}**")
                                 st.write(f"Mã SP: {row.ma_san_pham}")
                                 if hasattr(row, 'hinh_anh') and pd.notna(row.hinh_anh):
-                                    st.image(row.hinh_anh, caption=row.ten_san_pham, use_column_width=True)
+                                    st.image(row.hinh_anh, caption=row.ten_san_pham)
                                 st.write("---")  # Separator
 
                 with dong_tabs[1]:
@@ -861,84 +861,193 @@ with main_tabs[1]:
             st.write("Không tìm thấy sản phẩm cho thương hiệu này.")
 
 
+# # Tab 3: Theo nhiều thương hiệu
+# with main_tabs[2]:
+#     # Cấu hình Streamlit
+#     st.title('Thống kê Đánh giá Sản phẩm theo Thương hiệu')
+
+#     # Lấy danh sách các dòng sản phẩm duy nhất từ cột 'dong_san_pham'
+#     dong_san_pham_list = df['dong_san_pham'].unique().tolist()
+
+#     # Chọn dòng sản phẩm từ danh sách
+#     selected_dong_san_pham = st.multiselect('Chọn Dòng Sản Phẩm:', dong_san_pham_list)
+
+#     # Lọc thương hiệu theo dòng sản phẩm đã chọn
+#     filtered_brands = df[df['dong_san_pham'].isin(selected_dong_san_pham)]['thuong_hieu'].unique().tolist() if selected_dong_san_pham else []
+
+#     # Chọn thương hiệu từ danh sách đã lọc
+#     selected_brands = st.multiselect('Chọn Thương hiệu:', filtered_brands)
+
+#     # Chọn loại đánh giá
+#     selected_review_types = st.multiselect('Chọn Loại Đánh giá:', df['so_sao'].unique())
+
+#     # Chuyển đổi ngày bình luận và tạo cột tháng
+#     df['ngay_binh_luan'] = pd.to_datetime(df['ngay_binh_luan'], format='%d/%m/%Y', errors='coerce').dropna()
+#     df['month'] = df['ngay_binh_luan'].dt.to_period('M')
+
+#     # Thiết lập tháng bắt đầu và tháng kết thúc
+#     min_month, max_month = df['month'].min().to_timestamp(), df['month'].max().to_timestamp()
+#     # Tạo hai cột cho ô nhập tháng bắt đầu và tháng kết thúc
+#     col1, col2 = st.columns(2)
+#     with col1:
+#         start_month = st.date_input('Tháng bắt đầu:', value=min_month, key='start_month')
+
+#     with col2:
+#         end_month = st.date_input('Tháng kết thúc:', value=max_month, key='end_month')
+
+#     # Xử lý giờ
+#     df['hour'] = pd.to_datetime(df['gio_binh_luan'].astype(str), format='%H:%M').dt.hour
+#     min_hour, max_hour = df['hour'].min(), df['hour'].max()
+#     # Tạo hai cột cho ô nhập giờ bắt đầu và giờ kết thúc
+#     col3, col4 = st.columns(2)
+#     with col3:
+#         start_hour = st.number_input('Giờ bắt đầu:', min_value=min_hour, max_value=max_hour, value=min_hour, key='start_hour_input')
+#     with col4:
+#         end_hour = st.number_input('Giờ kết thúc:', min_value=start_hour, max_value=max_hour, value=max_hour, key='end_hour_input')
+
+#     # Nút để thực hiện phân tích
+#     if st.button('Thống kê'):
+#         if selected_brands and selected_dong_san_pham:
+#             # Lọc dữ liệu
+#             filtered_df = df[df['dong_san_pham'].isin(selected_dong_san_pham) & 
+#                             df['thuong_hieu'].isin(selected_brands) & 
+#                             df['so_sao'].notnull()]
+
+#             # Lọc dữ liệu theo khoảng thời gian
+#             start_period = pd.to_datetime(start_month).to_period('M')
+#             end_period = pd.to_datetime(end_month).to_period('M')
+#             filtered_df = filtered_df[(filtered_df['month'] >= start_period) & 
+#                                     (filtered_df['month'] <= end_period) & 
+#                                     (filtered_df['hour'] >= start_hour) & 
+#                                     (filtered_df['hour'] <= end_hour)]
+
+#             # Nhóm và đếm số lượng đánh giá cho từng loại đánh giá
+#             review_counts = filtered_df[filtered_df['so_sao'].isin(selected_review_types)].groupby(['thuong_hieu', 'so_sao']).size().unstack(fill_value=0)
+
+#             # Hiển thị kết quả
+#             if not review_counts.empty:
+#                 st.write(f'Số lượng đánh giá cho các loại **{", ".join(map(str, selected_review_types))}**:')
+                
+#                 # Vẽ biểu đồ cột
+#                 plt.figure(figsize=(10, 6))
+#                 ax = review_counts.plot(kind='bar', width=0.8)
+#                 for container in ax.containers:
+#                     for bar in container:
+#                         height = bar.get_height()
+#                         ax.annotate(f'{height}', 
+#                                     xy=(bar.get_x() + bar.get_width() / 2, height), 
+#                                     xytext=(0, 3),  
+#                                     textcoords='offset points',
+#                                     ha='center', va='bottom')
+
+#                 plt.title('Số lượng Đánh giá theo Thương hiệu và Loại Đánh giá')
+#                 plt.xlabel('Thương hiệu')
+#                 plt.ylabel('Số lượng Đánh giá')
+#                 plt.xticks(rotation=45)
+#                 plt.legend(title='Loại Đánh giá')
+#                 st.pyplot(plt)  
+                        
+#                 # Tạo tabs cho biểu đồ tròn đã được sắp xếp
+#                 valid_review_types = sorted([rt for rt in selected_review_types if rt in review_counts.columns])
+#                 if valid_review_types:
+#                     pie_tabs = st.tabs([f"{rt} sao" for rt in valid_review_types])
+#                     for i, review_type in enumerate(valid_review_types):
+#                         with pie_tabs[i]:
+#                             pie_data = review_counts[review_type]
+#                             fig_pie, ax_pie = plt.subplots(figsize=(8, 8))
+#                             pie_data.plot(kind='pie', autopct='%1.1f%%', startangle=90, ax=ax_pie)
+#                             ax_pie.set_title(f'Tỷ lệ đánh giá {review_type} sao giữa các thương hiệu')
+#                             ax_pie.set_ylabel('')
+#                             st.pyplot(fig_pie)
+#                 else:
+#                     st.warning("Không có loại đánh giá nào đáng để hiển thị.")
+#             else:    
+#                 st.warning("Vui lòng chọn ít nhất một thương hiệu và một dòng sản phẩm.")
+#         else:
+#             st.write('Vui lòng chọn ít nhất một thương hiệu và một dòng sản phẩm.')
+
 # Tab 3: Theo nhiều thương hiệu
 with main_tabs[2]:
-    # Cấu hình Streamlit
     st.title('Thống kê Đánh giá Sản phẩm theo Thương hiệu')
 
-    # Lấy danh sách các dòng sản phẩm duy nhất từ cột 'dong_san_pham'
-    dong_san_pham_list = df['dong_san_pham'].unique().tolist()
+    # Caching the unique list of product lines
+    @st.cache_data
+    def get_dong_san_pham_list(df):
+        return df['dong_san_pham'].unique().tolist()
 
-    # Chọn dòng sản phẩm từ danh sách
+    dong_san_pham_list = get_dong_san_pham_list(df)
+
+    # Select product lines
     selected_dong_san_pham = st.multiselect('Chọn Dòng Sản Phẩm:', dong_san_pham_list)
 
-    # Lọc thương hiệu theo dòng sản phẩm đã chọn
+    # Filter brands based on the selected product lines
     filtered_brands = df[df['dong_san_pham'].isin(selected_dong_san_pham)]['thuong_hieu'].unique().tolist() if selected_dong_san_pham else []
 
-    # Chọn thương hiệu từ danh sách đã lọc
+    # Selecting brands
     selected_brands = st.multiselect('Chọn Thương hiệu:', filtered_brands)
 
-    # Chọn loại đánh giá
+    # Select review types
     selected_review_types = st.multiselect('Chọn Loại Đánh giá:', df['so_sao'].unique())
 
-    # Chuyển đổi ngày bình luận và tạo cột tháng
-    df['ngay_binh_luan'] = pd.to_datetime(df['ngay_binh_luan'], format='%d/%m/%Y', errors='coerce').dropna()
-    df['month'] = df['ngay_binh_luan'].dt.to_period('M')
+    # Cache for processing the DataFrame
+    @st.cache_data
+    def process_dataframe(df):
+        df['ngay_binh_luan'] = pd.to_datetime(df['ngay_binh_luan'], format='%d/%m/%Y', errors='coerce')
+        df['month'] = df['ngay_binh_luan'].dt.to_period('M')
+        df['hour'] = pd.to_datetime(df['gio_binh_luan'].astype(str), format='%H:%M').dt.hour
+        return df.dropna(subset=['ngay_binh_luan'])
 
-    # Thiết lập tháng bắt đầu và tháng kết thúc
-    min_month, max_month = df['month'].min().to_timestamp(), df['month'].max().to_timestamp()
-    # Tạo hai cột cho ô nhập tháng bắt đầu và tháng kết thúc
+    df_processed = process_dataframe(df)
+
+    # Date range selection
+    min_month, max_month = df_processed['month'].min().to_timestamp(), df_processed['month'].max().to_timestamp()
     col1, col2 = st.columns(2)
     with col1:
         start_month = st.date_input('Tháng bắt đầu:', value=min_month, key='start_month')
-
     with col2:
         end_month = st.date_input('Tháng kết thúc:', value=max_month, key='end_month')
 
-    # Xử lý giờ
-    df['hour'] = pd.to_datetime(df['gio_binh_luan'].astype(str), format='%H:%M').dt.hour
-    min_hour, max_hour = df['hour'].min(), df['hour'].max()
-    # Tạo hai cột cho ô nhập giờ bắt đầu và giờ kết thúc
+    # Time selection
+    min_hour, max_hour = df_processed['hour'].min(), df_processed['hour'].max()
     col3, col4 = st.columns(2)
     with col3:
         start_hour = st.number_input('Giờ bắt đầu:', min_value=min_hour, max_value=max_hour, value=min_hour, key='start_hour_input')
     with col4:
         end_hour = st.number_input('Giờ kết thúc:', min_value=start_hour, max_value=max_hour, value=max_hour, key='end_hour_input')
 
-    # Nút để thực hiện phân tích
+    # Analysis button
     if st.button('Thống kê'):
         if selected_brands and selected_dong_san_pham:
-            # Lọc dữ liệu
-            filtered_df = df[df['dong_san_pham'].isin(selected_dong_san_pham) & 
-                            df['thuong_hieu'].isin(selected_brands) & 
-                            df['so_sao'].notnull()]
+            # Filter data
+            filtered_df = df_processed[
+                df_processed['dong_san_pham'].isin(selected_dong_san_pham) & 
+                df_processed['thuong_hieu'].isin(selected_brands) & 
+                df_processed['so_sao'].notnull()
+            ]
 
-            # Lọc dữ liệu theo khoảng thời gian
+            # Filter by date and hour
             start_period = pd.to_datetime(start_month).to_period('M')
             end_period = pd.to_datetime(end_month).to_period('M')
-            filtered_df = filtered_df[(filtered_df['month'] >= start_period) & 
-                                    (filtered_df['month'] <= end_period) & 
-                                    (filtered_df['hour'] >= start_hour) & 
-                                    (filtered_df['hour'] <= end_hour)]
+            filtered_df = filtered_df[
+                (filtered_df['month'] >= start_period) & 
+                (filtered_df['month'] <= end_period) & 
+                (filtered_df['hour'] >= start_hour) & 
+                (filtered_df['hour'] <= end_hour)
+            ]
 
-            # Nhóm và đếm số lượng đánh giá cho từng loại đánh giá
+            # Group by brand and review type
             review_counts = filtered_df[filtered_df['so_sao'].isin(selected_review_types)].groupby(['thuong_hieu', 'so_sao']).size().unstack(fill_value=0)
 
-            # Hiển thị kết quả
             if not review_counts.empty:
                 st.write(f'Số lượng đánh giá cho các loại **{", ".join(map(str, selected_review_types))}**:')
                 
-                # Vẽ biểu đồ cột
+                # Plot
                 plt.figure(figsize=(10, 6))
                 ax = review_counts.plot(kind='bar', width=0.8)
                 for container in ax.containers:
                     for bar in container:
                         height = bar.get_height()
-                        ax.annotate(f'{height}', 
-                                    xy=(bar.get_x() + bar.get_width() / 2, height), 
-                                    xytext=(0, 3),  
-                                    textcoords='offset points',
-                                    ha='center', va='bottom')
+                        ax.annotate(f'{height}', xy=(bar.get_x() + bar.get_width() / 2, height), xytext=(0, 3), textcoords='offset points', ha='center', va='bottom')
 
                 plt.title('Số lượng Đánh giá theo Thương hiệu và Loại Đánh giá')
                 plt.xlabel('Thương hiệu')
@@ -947,8 +1056,8 @@ with main_tabs[2]:
                 plt.legend(title='Loại Đánh giá')
                 st.pyplot(plt)  
                         
-                # Tạo tabs cho biểu đồ tròn đã được sắp xếp
                 valid_review_types = sorted([rt for rt in selected_review_types if rt in review_counts.columns])
+                # Pie charts for review types
                 if valid_review_types:
                     pie_tabs = st.tabs([f"{rt} sao" for rt in valid_review_types])
                     for i, review_type in enumerate(valid_review_types):
