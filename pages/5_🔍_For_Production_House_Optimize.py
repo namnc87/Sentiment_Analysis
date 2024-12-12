@@ -680,188 +680,188 @@ with main_tabs[0]:
         st.write("Không tìm thấy sản phẩm.")
 
 # Tab 2: Theo từng thương hiệu
-with main_tabs[1]:    
-    # Lấy danh sách thương hiệu từ DataFrame df    
-    brands = df['thuong_hieu'].astype(str).unique().tolist()
-    brands = sorted(set(brand for brand in brands if brand.lower() != 'nan'))  # Remove 'nan' and sort
+# with main_tabs[1]: (local)   
+#     # Lấy danh sách thương hiệu từ DataFrame df    
+#     brands = df['thuong_hieu'].astype(str).unique().tolist()
+#     brands = sorted(set(brand for brand in brands if brand.lower() != 'nan'))  # Remove 'nan' and sort
     
-    # Thêm tùy chọn "Chọn thương hiệu" vào đầu danh sách
-    brands.insert(0, "Chọn thương hiệu") 
+#     # Thêm tùy chọn "Chọn thương hiệu" vào đầu danh sách
+#     brands.insert(0, "Chọn thương hiệu") 
     
-    # Dropdown cho lựa chọn thương hiệu
-    selected_brand = st.selectbox("Vui lòng nhập hoặc chọn 1 thương hiệu:", brands, index=0, key='brand_selection')
+#     # Dropdown cho lựa chọn thương hiệu
+#     selected_brand = st.selectbox("Vui lòng nhập hoặc chọn 1 thương hiệu:", brands, index=0, key='brand_selection')
 
-    if selected_brand != "Chọn thương hiệu":
-        # Lọc DataFrame sản phẩm theo thương hiệu đã chọn
-        filtered_brand_df = df[df['thuong_hieu'].str.contains(selected_brand, case=False, na=False)].drop_duplicates(subset='ma_san_pham')
+#     if selected_brand != "Chọn thương hiệu":
+#         # Lọc DataFrame sản phẩm theo thương hiệu đã chọn
+#         filtered_brand_df = df[df['thuong_hieu'].str.contains(selected_brand, case=False, na=False)].drop_duplicates(subset='ma_san_pham')
 
-        if not filtered_brand_df.empty:
-            # Tạo danh sách sản phẩm
-            product_list_brands = filtered_brand_df.apply(lambda x: f"{x['ten_san_pham']} (Code: {x['ma_san_pham']})", axis=1).tolist()
+#         if not filtered_brand_df.empty:
+#             # Tạo danh sách sản phẩm
+#             product_list_brands = filtered_brand_df.apply(lambda x: f"{x['ten_san_pham']} (Code: {x['ma_san_pham']})", axis=1).tolist()
 
-            dis_tabs = st.tabs(['Tổng sản phẩm','Dòng sản phẩm'])
+#             dis_tabs = st.tabs(['Tổng sản phẩm','Dòng sản phẩm'])
 
-            with dis_tabs[0]:  # 'Tổng sản phẩm'
-                # Hiển thị tổng số lượng sản phẩm
-                product_count = filtered_brand_df.shape[0]
-                st.write(f"Có {product_count} sản phẩm của thương hiệu {selected_brand}.")
+#             with dis_tabs[0]:  # 'Tổng sản phẩm'
+#                 # Hiển thị tổng số lượng sản phẩm
+#                 product_count = filtered_brand_df.shape[0]
+#                 st.write(f"Có {product_count} sản phẩm của thương hiệu {selected_brand}.")
 
-                # Trực quan hóa số lượng đánh giá theo số sao
-                rating_counts = filtered_brand_df[['ma_san_pham', 'ten_san_pham']].copy()
-                rating_counts['ma_san_pham'] = rating_counts['ma_san_pham'].astype(str)
+#                 # Trực quan hóa số lượng đánh giá theo số sao
+#                 rating_counts = filtered_brand_df[['ma_san_pham', 'ten_san_pham']].copy()
+#                 rating_counts['ma_san_pham'] = rating_counts['ma_san_pham'].astype(str)
 
-                # Tính số lượng đánh giá cho từng sản phẩm
-                rating_summary = danh_gia.groupby('ma_san_pham')['so_sao'].value_counts().unstack(fill_value=0)
-                rating_summary['tong_danh_gia'] = rating_summary.sum(axis=1)
-                rating_counts = rating_counts.merge(rating_summary[['tong_danh_gia']], on='ma_san_pham', how='left')
+#                 # Tính số lượng đánh giá cho từng sản phẩm
+#                 rating_summary = danh_gia.groupby('ma_san_pham')['so_sao'].value_counts().unstack(fill_value=0)
+#                 rating_summary['tong_danh_gia'] = rating_summary.sum(axis=1)
+#                 rating_counts = rating_counts.merge(rating_summary[['tong_danh_gia']], on='ma_san_pham', how='left')
 
-                # Vẽ biểu đồ
-                fig, ax = plt.subplots(figsize=(10, 5))
-                bars = ax.barh(rating_counts['ten_san_pham'], rating_counts['tong_danh_gia'], color='skyblue')
-                ax.set_xlabel('Số lượng đánh giá')
-                ax.set_title(f'Số lượng đánh giá theo sản phẩm của thương hiệu {selected_brand}')
-                for bar in bars:
-                    ax.text(bar.get_width(), bar.get_y() + bar.get_height() / 2, f'{int(bar.get_width())}', va='center')
-                plt.tight_layout()
-                st.pyplot(fig)
+#                 # Vẽ biểu đồ
+#                 fig, ax = plt.subplots(figsize=(10, 5))
+#                 bars = ax.barh(rating_counts['ten_san_pham'], rating_counts['tong_danh_gia'], color='skyblue')
+#                 ax.set_xlabel('Số lượng đánh giá')
+#                 ax.set_title(f'Số lượng đánh giá theo sản phẩm của thương hiệu {selected_brand}')
+#                 for bar in bars:
+#                     ax.text(bar.get_width(), bar.get_y() + bar.get_height() / 2, f'{int(bar.get_width())}', va='center')
+#                 plt.tight_layout()
+#                 st.pyplot(fig)
 
-                # Phân tích cho từng sản phẩm
-                selected_product_brand = st.selectbox("Chọn sản phẩm để phân tích:", product_list_brands, key='product_brand_selection')
-                selected_code_brand = selected_product_brand.split(" (Code: ")[-1].rstrip(")")
-                selected_row_2 = filtered_brand_df[filtered_brand_df['ma_san_pham'] == selected_code_brand].iloc[0]
+#                 # Phân tích cho từng sản phẩm
+#                 selected_product_brand = st.selectbox("Chọn sản phẩm để phân tích:", product_list_brands, key='product_brand_selection')
+#                 selected_code_brand = selected_product_brand.split(" (Code: ")[-1].rstrip(")")
+#                 selected_row_2 = filtered_brand_df[filtered_brand_df['ma_san_pham'] == selected_code_brand].iloc[0]
 
-                st.write("Bạn đã chọn sản phẩm:", selected_product_brand)
-                st.write("Mã sản phẩm:", selected_code_brand)
+#                 st.write("Bạn đã chọn sản phẩm:", selected_product_brand)
+#                 st.write("Mã sản phẩm:", selected_code_brand)
 
-                # Hiển thị hình ảnh và mô tả sản phẩm
-                subcol1, subcol2 = st.columns([2, 1.5])  # Adjust proportions
+#                 # Hiển thị hình ảnh và mô tả sản phẩm
+#                 subcol1, subcol2 = st.columns([2, 1.5])  # Adjust proportions
 
-                with subcol1:
-                    st.image(selected_row_2['hinh_anh'], caption=selected_row_2['ten_san_pham'])
-                with subcol2:
-                    st.markdown(f"<h4>Giá bán: {format_currency(selected_row_2['gia_ban'])}</h4>", unsafe_allow_html=True)
-                    st.markdown(f"<h4>Điểm trung bình: {selected_row_2['diem_trung_binh']}</h4>", unsafe_allow_html=True)
-                    st.page_link(page=selected_row_2['chi_tiet'], label='**Nhấn vào để xem chi tiết**')
+#                 with subcol1:
+#                     st.image(selected_row_2['hinh_anh'], caption=selected_row_2['ten_san_pham'])
+#                 with subcol2:
+#                     st.markdown(f"<h4>Giá bán: {format_currency(selected_row_2['gia_ban'])}</h4>", unsafe_allow_html=True)
+#                     st.markdown(f"<h4>Điểm trung bình: {selected_row_2['diem_trung_binh']}</h4>", unsafe_allow_html=True)
+#                     st.page_link(page=selected_row_2['chi_tiet'], label='**Nhấn vào để xem chi tiết**')
 
-                # Thống kê bình luận
-                st.write("Thống kê số lượng bình luận:")
-                sub2_tabs = st.tabs(["Tháng", "Giờ", "WordCloud"])
-                with sub2_tabs[0]:
-                    analyze_comments_by_month(danh_gia, selected_code_brand)
-                with sub2_tabs[1]:
-                    analyze_comments_by_hour(danh_gia, selected_code_brand)
-                with sub2_tabs[2]:
-                    plot_product_comments_wordcloud(danh_gia, selected_code_brand)
+#                 # Thống kê bình luận
+#                 st.write("Thống kê số lượng bình luận:")
+#                 sub2_tabs = st.tabs(["Tháng", "Giờ", "WordCloud"])
+#                 with sub2_tabs[0]:
+#                     analyze_comments_by_month(danh_gia, selected_code_brand)
+#                 with sub2_tabs[1]:
+#                     analyze_comments_by_hour(danh_gia, selected_code_brand)
+#                 with sub2_tabs[2]:
+#                     plot_product_comments_wordcloud(danh_gia, selected_code_brand)
 
-            with dis_tabs[1]:  # 'Dòng sản phẩm'
-                # Đếm số lượng sản phẩm theo từng dòng sản phẩm
-                product_line_counts = filtered_brand_df['dong_san_pham'].value_counts()
-                total_product_lines = product_line_counts.count()  
-                st.write(f"Tổng số dòng sản phẩm của thương hiệu {selected_brand}: {total_product_lines}")
+#             with dis_tabs[1]:  # 'Dòng sản phẩm'
+#                 # Đếm số lượng sản phẩm theo từng dòng sản phẩm
+#                 product_line_counts = filtered_brand_df['dong_san_pham'].value_counts()
+#                 total_product_lines = product_line_counts.count()  
+#                 st.write(f"Tổng số dòng sản phẩm của thương hiệu {selected_brand}: {total_product_lines}")
 
-                # Tạo tabs cho các phân mục
-                dong_tabs = st.tabs(['Sản phẩm', 'Bình luận', 'Đánh giá'])
+#                 # Tạo tabs cho các phân mục
+#                 dong_tabs = st.tabs(['Sản phẩm', 'Bình luận', 'Đánh giá'])
 
-                with dong_tabs[0]:  # 'Sản phẩm'                   
-                    product_line_df = pd.DataFrame({
-                        'Dòng sản phẩm': product_line_counts.index,
-                        'Số lượng sản phẩm': product_line_counts.values
-                    })
+#                 with dong_tabs[0]:  # 'Sản phẩm'                   
+#                     product_line_df = pd.DataFrame({
+#                         'Dòng sản phẩm': product_line_counts.index,
+#                         'Số lượng sản phẩm': product_line_counts.values
+#                     })
 
-                    # Vẽ biểu đồ phân bố số lượng sản phẩm theo dòng
-                    fig = px.bar(product_line_df, x='Số lượng sản phẩm', y='Dòng sản phẩm',
-                                 orientation='h', text='Số lượng sản phẩm',
-                                 title=f'Phân bố số lượng sản phẩm theo dòng - {selected_brand}')
-                    fig.update_traces(textposition='outside')
-                    st.plotly_chart(fig, use_container_width=True)
+#                     # Vẽ biểu đồ phân bố số lượng sản phẩm theo dòng
+#                     fig = px.bar(product_line_df, x='Số lượng sản phẩm', y='Dòng sản phẩm',
+#                                  orientation='h', text='Số lượng sản phẩm',
+#                                  title=f'Phân bố số lượng sản phẩm theo dòng - {selected_brand}')
+#                     fig.update_traces(textposition='outside')
+#                     st.plotly_chart(fig, use_container_width=True)
 
-                    # Dropdown để chọn dòng sản phẩm
-                    product_lines = sorted(filtered_brand_df['dong_san_pham'].unique().tolist())
-                    selected_product_line = st.selectbox("Chọn dòng sản phẩm để xem chi tiết:", ["Chọn dòng sản phẩm"] + product_lines, key='product_line_selection')
+#                     # Dropdown để chọn dòng sản phẩm
+#                     product_lines = sorted(filtered_brand_df['dong_san_pham'].unique().tolist())
+#                     selected_product_line = st.selectbox("Chọn dòng sản phẩm để xem chi tiết:", ["Chọn dòng sản phẩm"] + product_lines, key='product_line_selection')
 
-                    if selected_product_line != "Chọn dòng sản phẩm":
-                        product_line_df = filtered_brand_df[filtered_brand_df['dong_san_pham'] == selected_product_line]
-                        st.write(f"Có {len(product_line_df)} sản phẩm trong dòng {selected_product_line}")
+#                     if selected_product_line != "Chọn dòng sản phẩm":
+#                         product_line_df = filtered_brand_df[filtered_brand_df['dong_san_pham'] == selected_product_line]
+#                         st.write(f"Có {len(product_line_df)} sản phẩm trong dòng {selected_product_line}")
                         
-                        cols = st.columns(3)
-                        for idx, row in enumerate(product_line_df.itertuples()):
-                            col_idx = idx % 3
-                            with cols[col_idx]:
-                                st.write(f"**{row.ten_san_pham}**")
-                                st.write(f"Mã SP: {row.ma_san_pham}")
-                                if hasattr(row, 'hinh_anh') and pd.notna(row.hinh_anh):
-                                    st.image(row.hinh_anh, caption=row.ten_san_pham)
-                                st.write("---")  # Separator
+#                         cols = st.columns(3)
+#                         for idx, row in enumerate(product_line_df.itertuples()):
+#                             col_idx = idx % 3
+#                             with cols[col_idx]:
+#                                 st.write(f"**{row.ten_san_pham}**")
+#                                 st.write(f"Mã SP: {row.ma_san_pham}")
+#                                 if hasattr(row, 'hinh_anh') and pd.notna(row.hinh_anh):
+#                                     st.image(row.hinh_anh, caption=row.ten_san_pham)
+#                                 st.write("---")  # Separator
 
-                with dong_tabs[1]:
-                    product_comments = pd.merge(
-                        filtered_brand_df[['ma_san_pham', 'dong_san_pham']],
-                        danh_gia[['ma_san_pham', 'noi_dung_binh_luan', 'phan_loai_danh_gia']], 
-                        on='ma_san_pham', how='left'
-                    )
-                    comments_by_line = product_comments.groupby('dong_san_pham')['noi_dung_binh_luan'].count().reset_index()
-                    comments_by_line.columns = ['Dòng sản phẩm', 'Số lượng bình luận']
+#                 with dong_tabs[1]:
+#                     product_comments = pd.merge(
+#                         filtered_brand_df[['ma_san_pham', 'dong_san_pham']],
+#                         danh_gia[['ma_san_pham', 'noi_dung_binh_luan', 'phan_loai_danh_gia']], 
+#                         on='ma_san_pham', how='left'
+#                     )
+#                     comments_by_line = product_comments.groupby('dong_san_pham')['noi_dung_binh_luan'].count().reset_index()
+#                     comments_by_line.columns = ['Dòng sản phẩm', 'Số lượng bình luận']
                     
-                    # Vẽ biểu đồ phân bố số lượng bình luận
-                    fig1 = px.bar(comments_by_line, x='Dòng sản phẩm', y='Số lượng bình luận',
-                                   text='Số lượng bình luận', title=f'Phân bố số lượng bình luận theo dòng sản phẩm - {selected_brand}')
-                    fig1.update_traces(textposition='outside')
-                    st.plotly_chart(fig1, use_container_width=True)
+#                     # Vẽ biểu đồ phân bố số lượng bình luận
+#                     fig1 = px.bar(comments_by_line, x='Dòng sản phẩm', y='Số lượng bình luận',
+#                                    text='Số lượng bình luận', title=f'Phân bố số lượng bình luận theo dòng sản phẩm - {selected_brand}')
+#                     fig1.update_traces(textposition='outside')
+#                     st.plotly_chart(fig1, use_container_width=True)
 
-                    # Tính số lượng bình luận positive và negative theo từng dòng sản phẩm
-                    sentiment_by_line = product_comments.groupby(['dong_san_pham', 'phan_loai_danh_gia']).size().unstack(fill_value=0)
-                    st.write("Số lượng bình luận theo sentiment cho từng dòng sản phẩm:")
-                    st.dataframe(sentiment_by_line)
+#                     # Tính số lượng bình luận positive và negative theo từng dòng sản phẩm
+#                     sentiment_by_line = product_comments.groupby(['dong_san_pham', 'phan_loai_danh_gia']).size().unstack(fill_value=0)
+#                     st.write("Số lượng bình luận theo sentiment cho từng dòng sản phẩm:")
+#                     st.dataframe(sentiment_by_line)
 
-                    if not sentiment_by_line.empty:
-                        for dong_sp, row in sentiment_by_line.iterrows():
-                            col = st.columns(2)  # Limiting to 2 per row
-                            with col[0]:
-                                fig = px.pie(values=row.values, names=row.index,
-                                             title=f'Phân bố bình luận - {dong_sp}',
-                                             color_discrete_map={'positive': '#2ECC71', 'negative': '#E74C3C'})
-                                st.plotly_chart(fig)
-                                st.write(f"Tích cực: {row.get('positive', 0)}")
-                                st.write(f"Tiêu cực: {row.get('negative', 0)}")
+#                     if not sentiment_by_line.empty:
+#                         for dong_sp, row in sentiment_by_line.iterrows():
+#                             col = st.columns(2)  # Limiting to 2 per row
+#                             with col[0]:
+#                                 fig = px.pie(values=row.values, names=row.index,
+#                                              title=f'Phân bố bình luận - {dong_sp}',
+#                                              color_discrete_map={'positive': '#2ECC71', 'negative': '#E74C3C'})
+#                                 st.plotly_chart(fig)
+#                                 st.write(f"Tích cực: {row.get('positive', 0)}")
+#                                 st.write(f"Tiêu cực: {row.get('negative', 0)}")
 
-                with dong_tabs[2]:  # 'Đánh giá'
-                    rating_counts = (
-                        pd.merge(
-                            filtered_brand_df[['ma_san_pham', 'dong_san_pham']], 
-                            danh_gia[['ma_san_pham', 'so_sao']], 
-                            on='ma_san_pham', how='left'
-                        )
-                        .groupby(['dong_san_pham', 'so_sao'])
-                        .size()
-                        .unstack(fill_value=0)
-                    )
+#                 with dong_tabs[2]:  # 'Đánh giá'
+#                     rating_counts = (
+#                         pd.merge(
+#                             filtered_brand_df[['ma_san_pham', 'dong_san_pham']], 
+#                             danh_gia[['ma_san_pham', 'so_sao']], 
+#                             on='ma_san_pham', how='left'
+#                         )
+#                         .groupby(['dong_san_pham', 'so_sao'])
+#                         .size()
+#                         .unstack(fill_value=0)
+#                     )
 
-                    st.write("Số lượng các loại so_sao theo từng dòng sản phẩm:")
-                    st.dataframe(rating_counts)
+#                     st.write("Số lượng các loại so_sao theo từng dòng sản phẩm:")
+#                     st.dataframe(rating_counts)
 
-                    rating_counts_long = rating_counts.reset_index().melt(id_vars='dong_san_pham', var_name='Loại so_sao', value_name='Số lượng')
+#                     rating_counts_long = rating_counts.reset_index().melt(id_vars='dong_san_pham', var_name='Loại so_sao', value_name='Số lượng')
 
-                    # Vẽ biểu đồ cột cho số lượng từng loại so_sao theo từng dòng sản phẩm
-                    fig_bar = px.bar(rating_counts_long, x='dong_san_pham', y='Số lượng', 
-                                     color='Loại so_sao', title=f'Số lượng từng loại so_sao theo từng dòng sản phẩm - {selected_brand}',
-                                     labels={'Số lượng': 'Số lượng', 'dong_san_pham': 'Dòng sản phẩm'}, barmode='group')
-                    st.plotly_chart(fig_bar, use_container_width=True)
+#                     # Vẽ biểu đồ cột cho số lượng từng loại so_sao theo từng dòng sản phẩm
+#                     fig_bar = px.bar(rating_counts_long, x='dong_san_pham', y='Số lượng', 
+#                                      color='Loại so_sao', title=f'Số lượng từng loại so_sao theo từng dòng sản phẩm - {selected_brand}',
+#                                      labels={'Số lượng': 'Số lượng', 'dong_san_pham': 'Dòng sản phẩm'}, barmode='group')
+#                     st.plotly_chart(fig_bar, use_container_width=True)
 
-                    # Vẽ biểu đồ tròn tỷ lệ phần trăm giữa các loại so_sao
-                    if not rating_counts.empty:
-                        for dong_sp in rating_counts.index:
-                            row = rating_counts.loc[dong_sp]
-                            fig = px.pie(values=row.values, names=row.index,
-                                         title=f'Tỷ lệ phần trăm các loại so_sao - {dong_sp}')
-                            st.plotly_chart(fig)
-                            st.write("Tổng số lượng so_sao:", row.sum())
-                    else:
-                        st.write("Không có dữ liệu để hiển thị.")
-        else:
-            st.write("Không tìm thấy sản phẩm cho thương hiệu này.")
+#                     # Vẽ biểu đồ tròn tỷ lệ phần trăm giữa các loại so_sao
+#                     if not rating_counts.empty:
+#                         for dong_sp in rating_counts.index:
+#                             row = rating_counts.loc[dong_sp]
+#                             fig = px.pie(values=row.values, names=row.index,
+#                                          title=f'Tỷ lệ phần trăm các loại so_sao - {dong_sp}')
+#                             st.plotly_chart(fig)
+#                             st.write("Tổng số lượng so_sao:", row.sum())
+#                     else:
+#                         st.write("Không có dữ liệu để hiển thị.")
+#         else:
+#             st.write("Không tìm thấy sản phẩm cho thương hiệu này.")
 
 
-# # Tab 3: Theo nhiều thương hiệu
+# # Tab 3: Theo nhiều thương hiệu (Local)
 # with main_tabs[2]:
 #     # Cấu hình Streamlit
 #     st.title('Thống kê Đánh giá Sản phẩm theo Thương hiệu')
@@ -966,7 +966,191 @@ with main_tabs[1]:
 #         else:
 #             st.write('Vui lòng chọn ít nhất một thương hiệu và một dòng sản phẩm.')
 
-# Tab 3: Theo nhiều thương hiệu
+
+with main_tabs[1]:   # (cloud) 
+    st.title('Thống kê Đánh giá Sản phẩm theo Thương hiệu')
+
+    # Cache to load unique brands only once
+    @st.cache_data
+    def get_unique_brands(df):
+        brands = df['thuong_hieu'].astype(str).unique().tolist()
+        return sorted(set(brand for brand in brands if brand.lower() != 'nan'))  # Remove 'nan' and sort
+
+    brands = get_unique_brands(df)
+    brands.insert(0, "Chọn thương hiệu") 
+
+    # Dropdown for brand selection
+    selected_brand = st.selectbox("Vui lòng nhập hoặc chọn 1 thương hiệu:", brands, index=0, key='brand_selection')
+
+    if selected_brand != "Chọn thương hiệu":
+        # Lọc DataFrame sản phẩm theo thương hiệu đã chọn
+        @st.cache_data
+        def filter_brand_df(df, brand):
+            return df[df['thuong_hieu'].str.contains(brand, case=False, na=False)].drop_duplicates(subset='ma_san_pham')
+
+        filtered_brand_df = filter_brand_df(df, selected_brand)
+
+        if not filtered_brand_df.empty:
+            # Create product list
+            product_list_brands = filtered_brand_df.apply(lambda x: f"{x['ten_san_pham']} (Code: {x['ma_san_pham']})", axis=1).tolist()
+
+            dis_tabs = st.tabs(['Tổng sản phẩm', 'Dòng sản phẩm'])
+
+            with dis_tabs[0]:  # 'Tổng sản phẩm'
+                product_count = filtered_brand_df.shape[0]
+                st.write(f"Có {product_count} sản phẩm của thương hiệu {selected_brand}.")
+
+                # Caching for rating calculations
+                @st.cache_data
+                def calculate_rating_summary(df):
+                    rating_counts = df[['ma_san_pham', 'ten_san_pham']].copy()
+                    rating_summary = danh_gia.groupby('ma_san_pham')['so_sao'].value_counts().unstack(fill_value=0)
+                    rating_summary['tong_danh_gia'] = rating_summary.sum(axis=1)
+                    return rating_counts.merge(rating_summary[['tong_danh_gia']], on='ma_san_pham', how='left')
+
+                rating_counts = calculate_rating_summary(filtered_brand_df)
+
+                # Vẽ biểu đồ
+                fig, ax = plt.subplots(figsize=(10, 5))
+                bars = ax.barh(rating_counts['ten_san_pham'], rating_counts['tong_danh_gia'], color='skyblue')
+                ax.set_xlabel('Số lượng đánh giá')
+                ax.set_title(f'Số lượng đánh giá theo sản phẩm của thương hiệu {selected_brand}')
+                for bar in bars:
+                    ax.text(bar.get_width(), bar.get_y() + bar.get_height() / 2, f'{int(bar.get_width())}', va='center')
+                plt.tight_layout()
+                st.pyplot(fig)
+
+                # Product analysis selection
+                selected_product_brand = st.selectbox("Chọn sản phẩm để phân tích:", product_list_brands, key='product_brand_selection')
+                selected_code_brand = selected_product_brand.split(" (Code: ")[-1].rstrip(")")
+                selected_row_2 = filtered_brand_df[filtered_brand_df['ma_san_pham'] == selected_code_brand].iloc[0]
+
+                st.write("Bạn đã chọn sản phẩm:", selected_product_brand)
+                st.write("Mã sản phẩm:", selected_code_brand)
+
+                # Display product details
+                subcol1, subcol2 = st.columns([2, 1.5])
+                with subcol1:
+                    st.image(selected_row_2['hinh_anh'], caption=selected_row_2['ten_san_pham'])
+                with subcol2:
+                    st.markdown(f"<h4>Giá bán: {format_currency(selected_row_2['gia_ban'])}</h4>", unsafe_allow_html=True)
+                    st.markdown(f"<h4>Điểm trung bình: {selected_row_2['diem_trung_binh']}</h4>", unsafe_allow_html=True)
+                    st.page_link(page=selected_row_2['chi_tiet'], label='**Nhấn vào để xem chi tiết**')
+
+                # Statistics for comments
+                st.write("Thống kê số lượng bình luận:")
+                sub2_tabs = st.tabs(["Tháng", "Giờ", "WordCloud"])
+                with sub2_tabs[0]:
+                    analyze_comments_by_month(danh_gia, selected_code_brand)
+                with sub2_tabs[1]:
+                    analyze_comments_by_hour(danh_gia, selected_code_brand)
+                with sub2_tabs[2]:
+                    plot_product_comments_wordcloud(danh_gia, selected_code_brand)
+
+            with dis_tabs[1]:  # 'Dòng sản phẩm'
+                product_line_counts = filtered_brand_df['dong_san_pham'].value_counts()
+                total_product_lines = product_line_counts.count()
+                st.write(f"Tổng số dòng sản phẩm của thương hiệu {selected_brand}: {total_product_lines}")
+
+                dong_tabs = st.tabs(['Sản phẩm', 'Bình luận', 'Đánh giá'])
+
+                with dong_tabs[0]:  # 'Sản phẩm'                   
+                    product_line_df = pd.DataFrame({'Dòng sản phẩm': product_line_counts.index, 'Số lượng sản phẩm': product_line_counts.values})
+
+                    # Plot distribution of products by line
+                    fig = px.bar(product_line_df, x='Số lượng sản phẩm', y='Dòng sản phẩm',
+                                 orientation='h', text='Số lượng sản phẩm',
+                                 title=f'Phân bố số lượng sản phẩm theo dòng - {selected_brand}')
+                    fig.update_traces(textposition='outside')
+                    st.plotly_chart(fig, use_container_width=True)
+
+                    # Dropdown to select product lines
+                    product_lines = sorted(filtered_brand_df['dong_san_pham'].unique().tolist())
+                    selected_product_line = st.selectbox("Chọn dòng sản phẩm để xem chi tiết:", ["Chọn dòng sản phẩm"] + product_lines, key='product_line_selection')
+
+                    if selected_product_line != "Chọn dòng sản phẩm":
+                        product_line_df = filtered_brand_df[filtered_brand_df['dong_san_pham'] == selected_product_line]
+                        st.write(f"Có {len(product_line_df)} sản phẩm trong dòng {selected_product_line}")
+                        
+                        cols = st.columns(3)
+                        for idx, row in enumerate(product_line_df.itertuples()):
+                            col_idx = idx % 3
+                            with cols[col_idx]:
+                                st.write(f"**{row.ten_san_pham}**")
+                                st.write(f"Mã SP: {row.ma_san_pham}")
+                                if pd.notna(row.hinh_anh):
+                                    st.image(row.hinh_anh, caption=row.ten_san_pham)
+                                st.write("---")  # Separator
+
+                with dong_tabs[1]:
+                    product_comments = pd.merge(
+                        filtered_brand_df[['ma_san_pham', 'dong_san_pham']],
+                        danh_gia[['ma_san_pham', 'noi_dung_binh_luan', 'phan_loai_danh_gia']],
+                        on='ma_san_pham', how='left'
+                    )
+                    comments_by_line = product_comments.groupby('dong_san_pham')['noi_dung_binh_luan'].count().reset_index()
+                    comments_by_line.columns = ['Dòng sản phẩm', 'Số lượng bình luận']
+                    
+                    # Draw a plot for comment distribution
+                    fig1 = px.bar(comments_by_line, x='Dòng sản phẩm', y='Số lượng bình luận',
+                                   text='Số lượng bình luận', title=f'Phân bố số lượng bình luận theo dòng sản phẩm - {selected_brand}')
+                    fig1.update_traces(textposition='outside')
+                    st.plotly_chart(fig1, use_container_width=True)
+
+                    # Count positive and negative comments by product line
+                    sentiment_by_line = product_comments.groupby(['dong_san_pham', 'phan_loai_danh_gia']).size().unstack(fill_value=0)
+                    st.write("Số lượng bình luận theo sentiment cho từng dòng sản phẩm:")
+                    st.dataframe(sentiment_by_line)
+
+                    if not sentiment_by_line.empty:
+                        for dong_sp, row in sentiment_by_line.iterrows():
+                            col = st.columns(2)  # Limiting to 2 per row
+                            with col[0]:
+                                fig = px.pie(values=row.values, names=row.index,
+                                             title=f'Phân bố bình luận - {dong_sp}',
+                                             color_discrete_map={'positive': '#2ECC71', 'negative': '#E74C3C'})
+                                st.plotly_chart(fig)
+                                st.write(f"Tích cực: {row.get('positive', 0)}")
+                                st.write(f"Tiêu cực: {row.get('negative', 0)}")
+
+                with dong_tabs[2]:  # 'Đánh giá'
+                    rating_counts = (
+                        pd.merge(
+                            filtered_brand_df[['ma_san_pham', 'dong_san_pham']], 
+                            danh_gia[['ma_san_pham', 'so_sao']], 
+                            on='ma_san_pham', how='left'
+                        )
+                        .groupby(['dong_san_pham', 'so_sao'])
+                        .size()
+                        .unstack(fill_value=0)
+                    )
+
+                    st.write("Số lượng các loại so_sao theo từng dòng sản phẩm:")
+                    st.dataframe(rating_counts)
+
+                    rating_counts_long = rating_counts.reset_index().melt(id_vars='dong_san_pham', var_name='Loại so_sao', value_name='Số lượng')
+
+                    # Plot for each rating count by product line
+                    fig_bar = px.bar(rating_counts_long, x='dong_san_pham', y='Số lượng', 
+                                     color='Loại so_sao', title=f'Số lượng từng loại so_sao theo từng dòng sản phẩm - {selected_brand}',
+                                     labels={'Số lượng': 'Số lượng', 'dong_san_pham': 'Dòng sản phẩm'}, barmode='group')
+                    st.plotly_chart(fig_bar, use_container_width=True)
+
+                    # Pie chart for rating distributions
+                    if not rating_counts.empty:
+                        for dong_sp in rating_counts.index:
+                            row = rating_counts.loc[dong_sp]
+                            fig = px.pie(values=row.values, names=row.index,
+                                         title=f'Tỷ lệ phần trăm các loại so_sao - {dong_sp}')
+                            st.plotly_chart(fig)
+                            st.write("Tổng số lượng so_sao:", row.sum())
+                    else:
+                        st.write("Không có dữ liệu để hiển thị.")
+        else:
+            st.write("Không tìm thấy sản phẩm cho thương hiệu này.")
+
+
+# Tab 3: Theo nhiều thương hiệu (Cloud)
 with main_tabs[2]:
     st.title('Thống kê Đánh giá Sản phẩm theo Thương hiệu')
 
