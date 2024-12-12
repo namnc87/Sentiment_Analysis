@@ -790,7 +790,7 @@ with main_tabs[1]:
                                 st.write(f"**{row.ten_san_pham}**")
                                 st.write(f"Mã SP: {row.ma_san_pham}")
                                 if hasattr(row, 'hinh_anh') and pd.notna(row.hinh_anh):
-                                    st.image(row.hinh_anh, caption=row.ten_san_pham, use_container_width=True)
+                                    st.image(row.hinh_anh, caption=row.ten_san_pham, use_column_width=True)
                                 st.write("---")  # Separator
 
                 with dong_tabs[1]:
