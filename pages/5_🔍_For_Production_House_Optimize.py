@@ -579,7 +579,7 @@ def plot_product_comments_wordcloud(df, product_id, stopwords=None):
                 found_positive_phrases.append(positive_phrase)
 
         if found_positive_phrases:
-            st.write("Các cụm từ tích cực tìm thấy:", ', '.join(found_positive_phrases))
+            # st.write("Các cụm từ tích cực tìm thấy:", ', '.join(found_positive_phrases))
             create_wordcloud(found_positive_phrases)
         else:
             st.write("Không có từ tích cực nào được tìm thấy.")
@@ -594,7 +594,7 @@ def plot_product_comments_wordcloud(df, product_id, stopwords=None):
                 found_negative_phrases.append(negative_phrase)
 
         if found_negative_phrases:
-            st.write("Các cụm từ tiêu cực tìm thấy:", ', '.join(found_negative_phrases))
+            # st.write("Các cụm từ tiêu cực tìm thấy:", ', '.join(found_negative_phrases))
             create_wordcloud(found_negative_phrases)
         else:
             st.write("Không có từ tiêu cực nào được tìm thấy.")
