@@ -1,0 +1,3 @@
+key_phrases: giao, ship, giao hàng
+positive_words: nhanh
+negative_words: ẩu, tệ, chậm, trễ

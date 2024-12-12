@@ -1,3 +1,71 @@
+# from selenium import webdriver
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.support.ui import WebDriverWait
+# from selenium.webdriver.support import expected_conditions as EC
+# import pandas as pd
+# import time
+
+# driver = webdriver.Chrome()
+# wait = WebDriverWait(driver, 10)
+
+# product_data = []
+
+# try:
+#     for page in range(1, 11):  # Adjust as needed
+#         driver.get(f"https://hasaki.vn/danh-muc/cham-soc-da-mat-c4.html?p={page}")
+#         products = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "ProductGridItem__itemOuter")))
+
+#         for product in products:
+#             try:
+#                 # Scroll product into view
+#                 driver.execute_script("arguments[0].scrollIntoView();", product)
+#                 time.sleep(0.5)  # Optional: Small wait to ensure scrolling is complete
+
+#                 # Extracting the image URL with additional error handling
+#                 hinh_anh = product.find_element(By.CSS_SELECTOR, "img.img_thumb.lazy.loaded").get_attribute('src')
+
+
+#                 # Extracting the detail page link
+#                 chi_tiet = product.find_element(By.CLASS_NAME, "block_info_item_sp").get_attribute('href')
+
+#                 # Extracting the product ID (data-id)
+#                 ma_san_pham = product.find_element(By.CLASS_NAME, "block_info_item_sp").get_attribute('data-id')
+
+#                 # Extracting the brand (data-brand)
+#                 thuong_hieu = product.find_element(By.CLASS_NAME, "block_info_item_sp").get_attribute('data-brand')
+
+#                 # Extracting catergory
+#                 category = product.find_element(By.CLASS_NAME, "block_info_item_sp").get_attribute('data-category-name')
+
+#                 # Add the data to the product_data list
+#                 product_data.append({
+#                     'ma_san_pham': ma_san_pham,
+#                     'hinh_anh': hinh_anh,
+#                     'chi_tiet': chi_tiet,
+#                     'thuong_hieu': thuong_hieu,
+#                     'dong_san_pham': category
+#                 })
+
+#             except Exception as e:
+#                 print(f"Error while processing product: {e}")
+#                 continue
+
+#     print("Total products collected:", len(product_data))
+
+#     # Write product data to CSV
+#     if product_data:
+#         df = pd.DataFrame(product_data)
+#         df.to_csv('San_pham_Link_Image_Brand.csv', index=False, encoding='utf-8-sig')
+#         print("Data written to CSV.")
+#     else:
+#         print("No product data to write to CSV.")
+
+# except Exception as e:
+#     print(f"Main error: {e}")
+
+# finally:
+#     driver.quit()
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -10,92 +78,55 @@ wait = WebDriverWait(driver, 10)
 
 product_data = []
 
-def safe_get_text(locator):
-    """Retrieve text from an element safely, returning an empty string if not found."""
-    try:
-        return wait.until(EC.presence_of_element_located(locator)).text
-    except Exception:
-        return ""
-
-def click_element(element):
-    """Click an element using JavaScript to avoid interception issues."""
-    driver.execute_script("arguments[0].click();", element)
-
 try:
-    for page in range(1, 70):  # Adjust as needed
+    for page in range(51, 70):  # Adjust as needed
         driver.get(f"https://hasaki.vn/danh-muc/cham-soc-da-mat-c4.html?p={page}")
         products = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "ProductGridItem__itemOuter")))
 
-        for i in range(len(products)):
+        for product in products:
             try:
-                products = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "ProductGridItem__itemOuter")))
-                product = products[i]
-                
                 # Scroll product into view
                 driver.execute_script("arguments[0].scrollIntoView();", product)
-                time.sleep(0.5)  # Optional: Small wait to ensure scrolling is complete
+                time.sleep(0.5)  # Optional extra wait to ensure scrolling is complete
 
+                # Attempt to extract the image URL with added error handling
                 try:
-                    # Try to click using Selenium normally
-                    product.click()
-                except Exception as click_error:
-                    print(f"Error clicking product normally: {click_error}")
-                    # Use JavaScript click as fallback
-                    click_element(product)
+                    hinh_anh = product.find_element(By.CSS_SELECTOR, "img.img_thumb").get_attribute('data-src')
+                except Exception as img_error:
+                    print(f"Image not found: {img_error}")
+                    hinh_anh = None
 
-                # Add a sleep to allow dynamic content to load
-                time.sleep(2)
+                # Extracting the detail page link
+                chi_tiet = product.find_element(By.CLASS_NAME, "block_info_item_sp").get_attribute('href')
 
-                # Collect product information
-                ma_san_pham = safe_get_text((By.CSS_SELECTOR, ".item-sku.txt_color_1")).split(": ")[1]
-                ten_san_pham = safe_get_text((By.CLASS_NAME, "page-title-wrapper"))
-                gia_ban_full = safe_get_text((By.ID, "product-final_price"))
-                gia_ban = int(gia_ban_full.replace('.', '').replace(' ₫', '')) if gia_ban_full else 0
-                gia_goc_full = safe_get_text((By.ID, "market_price"))
-                gia_goc = int(gia_goc_full.replace('.', '').replace(' ₫', '')) if gia_goc_full else 0
-                phan_loai = safe_get_text((By.XPATH, "//span[@class='txt_soluong selection']//span[@class='selection']"))
-                mo_ta = safe_get_text((By.ID, "box_thongtinsanpham"))
-                diem_trung_binh = safe_get_text((By.CSS_SELECTOR, ".txt_numer.txt_color_2"))
+                # Extracting the product ID (data-id)
+                ma_san_pham = product.find_element(By.CLASS_NAME, "block_info_item_sp").get_attribute('data-id')
 
-                image_element = wait.until(EC.presence_of_element_located((By.ID, "zoom_01")))
-                hinh_anh = image_element.get_attribute('src')
+                # Extracting the brand (data-brand)
+                thuong_hieu = product.find_element(By.CLASS_NAME, "block_info_item_sp").get_attribute('data-brand')
 
-                chi_tiet = driver.current_url 
+                # Extracting category
+                category = product.find_element(By.CLASS_NAME, "block_info_item_sp").get_attribute('data-category-name')
 
-                thuong_hieu = safe_get_text((By.CLASS_NAME, "title-brand"))
-                tong_danh_gia = int(safe_get_text((By.ID, "click_scroll_review")).split()[0])
-                tong_qa = int(safe_get_text((By.ID, "click_scroll_qa")).split()[0])
-
+                # Add the data to the product_data list
                 product_data.append({
                     'ma_san_pham': ma_san_pham,
-                    'ten_san_pham': ten_san_pham,
-                    'gia_ban': gia_ban,
-                    'gia_goc': gia_goc,
-                    'phan_loai': phan_loai,
-                    'mo_ta': mo_ta,
-                    'diem_trung_binh': diem_trung_binh,
                     'hinh_anh': hinh_anh,
                     'chi_tiet': chi_tiet,
                     'thuong_hieu': thuong_hieu,
-                    'tong_danh_gia': tong_danh_gia,
-                    'tong_qa': tong_qa
+                    'dong_san_pham': category
                 })
 
-                # Go back and wait for elements to be present
-                driver.back()
-                wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "ProductGridItem__itemOuter")))
-                time.sleep(2)
-
             except Exception as e:
-                print(f"Error while crawling product: {e}")
+                print(f"Error while processing product: {e}")
                 continue
 
     print("Total products collected:", len(product_data))
-    
-    # Write to CSV
+
+    # Write product data to CSV
     if product_data:
         df = pd.DataFrame(product_data)
-        df.to_csv('San_pham_Perfume_Link_Image_Brand.csv', index=False, mode='w', encoding='utf-8-sig')
+        df.to_csv('San_pham_Link_Image_Brand.csv', index=False, encoding='utf-8-sig')
         print("Data written to CSV.")
     else:
         print("No product data to write to CSV.")

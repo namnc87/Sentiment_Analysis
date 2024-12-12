@@ -1,39 +1,42 @@
 bình thường
-bị kích ứng
-bị mụn
-bị mụn viêm
-bị nóng
+bị_kích_ứng
+bị_mụn
+bị_mụn_viêm
+bị_nóng
 bị nổi bọt
 bọt nhiều
 bực
-bực mình
+bực_mình
 châm chít
-có cồn
+có_cồn
 dùng không hợp
 dưỡng chất hơi ít
-giao hàng hơi lâu
-hàng chậm
+giao_hàng_hơi_lâu
+hàng_chậm
 hơi ghê
-hương nồng
-hương nồng quá
+hương_nồng
+kem_rít
 khó chịu
-không có tem chống giả
-không hợp
-không kiềm dầu
-không mua lại
-không sạch
-không thần thánh
-không được tặng bông tẩy trang
-không ổn
-lên mụn ẩn
-mùi cồn
-mùi hơi khó chịu
-mụn nhẹ
-mụn sưng đỡ
+không_có_tem_chống_giả
+không_hợp
+không_kiềm_dầu
+không_mua_lại
+không_sạch
+không_thần thánh
+không_tặng_bông_tẩy_trang
+không_ổn
+lên_mụn_ẩn
+mùi_cồn
+mùi_hắc
+mùi_hơi_khó_chịu
+mụn_nhẹ
+mụn_sưng
+mùi_rất_nồng
+mùi_nồng
 nóng nhẹ
 rất dởm
 siêu mini
-tinh chất hơi ít
-kém chất lượng
-không xứng giá tiền
-chất lượng kém
+tinh_chất_ít
+kém_chất_lượng
+không_xứng_giá_tiền
+chất_lượng_kém
