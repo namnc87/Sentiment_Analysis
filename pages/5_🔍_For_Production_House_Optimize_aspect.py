@@ -223,24 +223,24 @@ df=danhgia_sanpham.copy()
 
 
 
-def create_wordcloud(text_data, title):
-    if not text_data:  # Nếu không có dữ liệu
-        return None
+# def create_wordcloud_aspect(text_data, title):
+#     if not text_data:  # Nếu không có dữ liệu
+#         return None
         
-    # Tạo WordCloud (đã bỏ font_path)
-    wordcloud = WordCloud(
-        width=300,
-        height=200,
-        background_color='white',
-        max_words=10
-    ).generate(' '.join(text_data))
+#     # Tạo WordCloud (đã bỏ font_path)
+#     wordcloud = WordCloud(
+#         width=300,
+#         height=200,
+#         background_color='white',
+#         max_words=10
+#     ).generate(' '.join(text_data))
     
-    # Tạo figure
-    fig, ax = plt.subplots(figsize=(4, 3))
-    ax.imshow(wordcloud, interpolation='bilinear')
-    ax.axis('off')
-    ax.set_title(title)
-    return fig
+#     # Tạo figure
+#     fig, ax = plt.subplots(figsize=(4, 3))
+#     ax.imshow(wordcloud, interpolation='bilinear')
+#     ax.axis('off')
+#     ax.set_title(title)
+#     return fig
 
 
 def load_keywords(filename):
@@ -251,83 +251,6 @@ def load_keywords(filename):
                 key, values = line.strip().split(':')
                 keywords[key.strip()] = set(v.strip() for v in values.split(','))
     return keywords
-
-# def check_content_pandas(df: pd.DataFrame, category: str, keywords: dict, stop_words: set) -> pd.DataFrame:
-#     # Extract keywords from the keywords dictionary
-#     key_phrases = keywords['key_phrases']
-#     positive_words = set(keywords['positive_words'])  # Use set for faster lookup
-#     negative_words = set(keywords['negative_words'])
-    
-#     # Convert content to lowercase
-#     df['content_lower'] = df['noi_dung_binh_luan'].str.lower()
-
-#     # Remove stop words and create cleaned content
-#     df['cleaned_content'] = df['content_lower'].astype(str).apply(
-#         lambda x: ' '.join([word for word in x.split() if word not in stop_words])
-#     )
-    
-#     # Initialize lists for results
-#     sentiment_col = []
-#     keyword_col = []
-
-#     # Iterate over each row in the DataFrame
-#     for index, row in df.iterrows():
-#         found = False
-        
-#         # Check if cleaned_content is None or empty
-#         cleaned_content = row['cleaned_content'] or '' 
-        
-#         for phrase in key_phrases:
-#             if phrase in cleaned_content:
-#                 # Check negative words first
-#                 for neg_word in negative_words:
-#                     if neg_word in cleaned_content:
-#                         sentiment_col.append('negative')
-#                         keyword_col.append(f'{phrase} {neg_word}')
-#                         found = True
-#                         break  # Break out of the negative check
-#                 if found:  # If already found a negative word, no need to check further
-#                     break
-                
-#                 # If no negatives, check for positives
-#                 for pos_word in positive_words:
-#                     if pos_word in cleaned_content:
-#                         sentiment_col.append('positive')
-#                         keyword_col.append(f'{phrase} {pos_word}')
-#                         found = True
-#                         break
-#                 if found:
-#                     break  # Break out if we've found a sentiment
-        
-#         if not found:
-#             # No phrases found or no sentiment detected; check based on the category
-#             if category == 'san_pham':
-#                 # Check for any negative word in the entire cleaned content
-#                 for neg_word in negative_words:
-#                     if neg_word in cleaned_content:
-#                         sentiment_col.append('negative')
-#                         keyword_col.append(f'sản phẩm {neg_word}')
-#                         found = True
-#                         break
-
-#                 if not found:
-#                     # Check for positive words
-#                     for pos_word in positive_words:
-#                         if pos_word in cleaned_content:
-#                             sentiment_col.append('positive')
-#                             keyword_col.append(f'sản phẩm {pos_word}')
-#                             found = True
-#                             break
-
-#             if not found:  # If nothing matched, it's neutral
-#                 sentiment_col.append('neutral')
-#                 keyword_col.append('')
-    
-#     # Add the results to the DataFrame
-#     df[f"{category}"] = sentiment_col
-#     df[f"{category}_kw"] = keyword_col
-    
-#     return df
 
 
 def check_content_pandas(df: pd.DataFrame, category: str, keywords: dict, stop_words: set) -> pd.DataFrame:
@@ -392,18 +315,20 @@ danh_gia = analyze_comments(danh_gia)
 
 
 
-
-def create_wordcloud(text_data, title):
+def create_wordcloud_aspect(text_data, title):
     if not text_data:  # Nếu không có dữ liệu
         return None
+    # Tạo từ điển tần suất cho các cụm từ
+    text_data = {phrase: text_data.count(phrase) for phrase in set(text_data)}
         
-    # Tạo WordCloud (đã bỏ font_path)
+    # Tạo WordCloud
     wordcloud = WordCloud(
         width=300,
         height=200,
         background_color='white',
-        max_words=10
-    ).generate(' '.join(text_data))
+        max_words=10,
+        collocations=False
+    ).generate_from_frequencies(text_data)
     
     # Tạo figure
     fig, ax = plt.subplots(figsize=(4, 3))
@@ -423,7 +348,7 @@ def analyze_comments_by_month(df, product_id):
     
     # Use boolean indexing once and store result
     product_comments = df.loc[df['ma_san_pham'] == product_id].copy()
-    
+
     if product_comments.empty:
         st.write(f"Không có dữ liệu cho sản phẩm ID {product_id}")
         return
@@ -529,7 +454,7 @@ def process_rating_data(filtered_comments):
         comments = filtered_comments[filtered_comments['so_sao'] == i]
         if not comments.empty:
             rating_data[i] = {
-                'comments': comments[['ngay_binh_luan', 'noi_dung_binh_luan']].copy(),
+                'comments': comments[['ngay_binh_luan', 'noi_dung_binh_luan',"san_pham","san_pham_kw","dich_vu",'dich_vu_kw',"giao_hang",'giao_hang_kw']].copy(),
                 'stats': {}
             }
             
@@ -551,62 +476,89 @@ def generate_wordcloud(texts, title):
     """Cache wordcloud generation."""
     if not texts:
         return None
-    return create_wordcloud(texts, title)
+    return create_wordcloud_aspect(texts, title)
+
 
 def display_rating_tabs(filtered_comments):
     """Display tabs with comments for each rating."""
     st.write("**Chi tiết bình luận theo đánh giá:**")
-    
+
     # Process data with caching
     rating_data = process_rating_data(filtered_comments)
-    
+
     # Create tabs once
     tab_labels = [f"Đánh giá {i}" for i in range(1, 6)]
     tabs = st.tabs(tab_labels)
-    
+
     # Display categories mapping
     categories_display = {
         'san_pham': 'Sản phẩm',
         'dich_vu': 'Dịch vụ',
         'giao_hang': 'Giao hàng'
     }
-    
+
+    # Load keywords for each category from the single keywords file
+    keywords = {category: load_keywords(f'{category}_keywords.txt') for category in categories_display.keys()}
+
     # Display data in tabs
     for i, tab in enumerate(tabs, 1):
         with tab:
             if i in rating_data:
                 st.write(f"**Chi tiết bình luận cho đánh giá {i} sao:**")
-                
+
                 # Display dataframe
-                st.dataframe(
-                    rating_data[i]['comments'],
-                    use_container_width=True
-                )
-                
-                # Create columns
+                st.dataframe(rating_data[i]['comments'], use_container_width=True)
+
+                # Create columns for categories
                 cols = st.columns(3)
+
+                # Initialize statistics for each category
+                stats_display = {category: {'positive_count': 0, 'negative_count': 0} for category in categories_display.keys()}
                 
-                # Display statistics and wordclouds
+                # Initialize sets for unique phrases
+                unique_positive_phrases = {category: set() for category in categories_display.keys()}  
+                unique_negative_phrases = {category: set() for category in categories_display.keys()} 
+
+                # Loop through comments and assess sentiment based on the {category} columns
+                comments = rating_data[i]['comments']  # Access comments dataframe directly
+                for index, row in comments.iterrows():
+                    for category in categories_display.keys():
+                        # Get the current category sentiment from the column
+                        sentiment_value = row[category]  # Assuming this contains 'positive' or 'negative'
+                        
+                        if sentiment_value == 'positive':
+                            # Collect the matched phrases for positive
+                            unique_positive_phrases[category].add(row[f"{category}_kw"])  # Get the phrase from the kw column
+                        elif sentiment_value == 'negative':
+                            # Collect the matched phrases for negative
+                            unique_negative_phrases[category].add(row[f"{category}_kw"])  # Get the phrase from the kw column
+
+                # Display statistics and unique phrases for each category
                 for col, (category, display_name) in zip(cols, categories_display.items()):
                     with col:
-                        stats = rating_data[i]['stats'][category]
-                        
                         st.write(f"**Thống kê {display_name}:**")
-                        st.write(f"- Positive: {stats['positive']['count']}")
-                        st.write(f"- Negative: {stats['negative']['count']}")
-                        
-                        # Generate and display wordclouds with caching
-                        if stats['positive']['data']:
-                            wordcloud = generate_wordcloud(stats['positive']['data'], 'Positive Words')
+                        st.write(f"- Positive: {len(unique_positive_phrases[category])}")
+                        st.write(f"- Negative: {len(unique_negative_phrases[category])}")
+
+                        # Generate and display wordclouds for matched words
+                        if unique_positive_phrases[category]:
+                            positive_text = list(unique_positive_phrases[category])  # Join unique phrases for the wordcloud
+                            wordcloud = generate_wordcloud(positive_text, 'Positive Words')
                             if wordcloud:
                                 st.pyplot(wordcloud)
-                                
-                        if stats['negative']['data']:
-                            wordcloud = generate_wordcloud(stats['negative']['data'], 'Negative Words')
+
+                        if unique_negative_phrases[category]:
+                            negative_text = list(unique_negative_phrases[category])  # Join unique phrases for the wordcloud
+                            wordcloud = generate_wordcloud(negative_text, 'Negative Words')
                             if wordcloud:
                                 st.pyplot(wordcloud)
             else:
                 st.write(f"Không có bình luận nào cho đánh giá {i} sao.")
+
+
+
+
+
 
 
 
