@@ -36,13 +36,9 @@ st.sidebar.success("Ngày báo cáo: \n # 16/12/2024")
 
 # Load data
 san_pham = pd.read_csv('San_pham.csv')
-st.write(san_pham)
 danh_gia= pd.read_csv('Danh_gia.csv')
-st.write(danh_gia)
 khach_hang= pd.read_csv('Khach_hang.csv')
-st.write(khach_hang)
 san_pham_image_brand_link = pd.read_csv('San_pham_Link_Image_Brand.csv')
-st.write(san_pham_image_brand_link)
 
 ################ START_ Tien xu ly cot noi_dung_binh_luan #####################
 
@@ -324,6 +320,7 @@ def analyze_comments_by_month(df, product_id):
                 if not comments_for_rating.empty:
                     st.write(f"**Chi tiết bình luận cho đánh giá {i} sao:**")
                     st.dataframe(comments_for_rating[['ngay_binh_luan', 'noi_dung_binh_luan']], use_container_width=True)
+                    st.write(comments_for_rating)
                     
                     # Thống kê cho từng cột
                     col1, col2, col3 = st.columns(3)
