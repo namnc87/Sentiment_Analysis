@@ -411,7 +411,7 @@ def display_monthly_analysis(filtered_comments, product_id, start_period, end_pe
                 ha='center', va='bottom')
     
     st.pyplot(fig)
-    plt.close()
+    plt.close(fig)
 
 def display_rating_analysis(filtered_comments, start_month, end_month, product_id):
     """Display rating analysis."""
@@ -439,7 +439,7 @@ def display_rating_analysis(filtered_comments, start_month, end_month, product_i
         ax.set_xticks(range(1, 6))
         ax.grid(axis='y')
         st.pyplot(fig)
-        plt.close()
+        plt.close(fig)
     
     # Display detailed comments by rating
     display_rating_tabs(filtered_comments)
@@ -1044,16 +1044,25 @@ with main_tabs[1]:
                     st.write("Số lượng bình luận theo sentiment cho từng dòng sản phẩm:")
                     st.dataframe(sentiment_by_line)
 
-                    if not sentiment_by_line.empty:
-                        for dong_sp, row in sentiment_by_line.iterrows():
-                            col = st.columns(2)  # Limiting to 2 per row
-                            with col[0]:
-                                fig = px.pie(values=row.values, names=row.index,
-                                            title=f'Phân bố bình luận - {dong_sp}',
-                                            color_discrete_map={'positive': '#2ECC71', 'negative': '#E74C3C'})
-                                st.plotly_chart(fig)
-                                st.write(f"Tích cực: {row.get('positive', 0)}")
-                                st.write(f"Tiêu cực: {row.get('negative', 0)}")
+                    # if not sentiment_by_line.empty:
+                    #     for dong_sp, row in sentiment_by_line.iterrows():
+                    #         col = st.columns(2)  # Limiting to 2 per row
+                    #         with col[0]:
+                    #             fig = px.pie(values=row.values, names=row.index,
+                    #                         title=f'Phân bố bình luận - {dong_sp}',
+                    #                         color_discrete_map={'positive': '#2ECC71', 'negative': '#E74C3C'})
+                    #             st.plotly_chart(fig)
+                    #             st.write(f"Tích cực: {row.get('positive', 0)}")
+                    #             st.write(f"Tiêu cực: {row.get('negative', 0)}")
+
+                if not sentiment_by_line.empty:
+                    for dong_sp, row in sentiment_by_line.iterrows():
+                        fig = px.pie(values=row.values, names=row.index,
+                                        title=f'Phân bố bình luận - {dong_sp}',
+                                        color_discrete_map={'positive': '#2ECC71', 'negative': '#E74C3C'})
+                        st.plotly_chart(fig)
+                        st.write(f"Tích cực: {row.get('positive', 0)}")
+                        st.write(f"Tiêu cực: {row.get('negative', 0)}")
 
                 with dong_tabs[2]:  # 'Đánh giá'
                     rating_counts = get_rating_counts(filtered_brand_df, danh_gia)
