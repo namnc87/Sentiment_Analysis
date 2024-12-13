@@ -36,9 +36,13 @@ st.sidebar.success("Ngày báo cáo: \n # 16/12/2024")
 
 # Load data
 san_pham = pd.read_csv('San_pham.csv')
+st.write(san_pham)
 danh_gia= pd.read_csv('Danh_gia.csv')
+st.write(danh_gia)
 khach_hang= pd.read_csv('Khach_hang.csv')
+st.write(khach_hang)
 san_pham_image_brand_link = pd.read_csv('San_pham_Link_Image_Brand.csv')
+st.write(san_pham_image_brand_link)
 
 ################ START_ Tien xu ly cot noi_dung_binh_luan #####################
 
@@ -219,6 +223,7 @@ san_pham = san_pham.merge(san_pham_image_brand_link,on="ma_san_pham", how='left'
 
 danhgia_sanpham = danh_gia.merge(san_pham,on="ma_san_pham", how='left')
 df=danhgia_sanpham.copy()
+st.write(df)
 
 #---START_Hàm thống kế số lượng bình luận theo tháng----------------------------------------
 def analyze_comments_by_month(df, product_id):
