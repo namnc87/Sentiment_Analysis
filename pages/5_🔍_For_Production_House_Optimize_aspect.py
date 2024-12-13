@@ -252,83 +252,122 @@ def load_keywords(filename):
                 keywords[key.strip()] = set(v.strip() for v in values.split(','))
     return keywords
 
+# def check_content_pandas(df: pd.DataFrame, category: str, keywords: dict, stop_words: set) -> pd.DataFrame:
+#     # Extract keywords from the keywords dictionary
+#     key_phrases = keywords['key_phrases']
+#     positive_words = set(keywords['positive_words'])  # Use set for faster lookup
+#     negative_words = set(keywords['negative_words'])
+    
+#     # Convert content to lowercase
+#     df['content_lower'] = df['noi_dung_binh_luan'].str.lower()
+
+#     # Remove stop words and create cleaned content
+#     df['cleaned_content'] = df['content_lower'].astype(str).apply(
+#         lambda x: ' '.join([word for word in x.split() if word not in stop_words])
+#     )
+    
+#     # Initialize lists for results
+#     sentiment_col = []
+#     keyword_col = []
+
+#     # Iterate over each row in the DataFrame
+#     for index, row in df.iterrows():
+#         found = False
+        
+#         # Check if cleaned_content is None or empty
+#         cleaned_content = row['cleaned_content'] or '' 
+        
+#         for phrase in key_phrases:
+#             if phrase in cleaned_content:
+#                 # Check negative words first
+#                 for neg_word in negative_words:
+#                     if neg_word in cleaned_content:
+#                         sentiment_col.append('negative')
+#                         keyword_col.append(f'{phrase} {neg_word}')
+#                         found = True
+#                         break  # Break out of the negative check
+#                 if found:  # If already found a negative word, no need to check further
+#                     break
+                
+#                 # If no negatives, check for positives
+#                 for pos_word in positive_words:
+#                     if pos_word in cleaned_content:
+#                         sentiment_col.append('positive')
+#                         keyword_col.append(f'{phrase} {pos_word}')
+#                         found = True
+#                         break
+#                 if found:
+#                     break  # Break out if we've found a sentiment
+        
+#         if not found:
+#             # No phrases found or no sentiment detected; check based on the category
+#             if category == 'san_pham':
+#                 # Check for any negative word in the entire cleaned content
+#                 for neg_word in negative_words:
+#                     if neg_word in cleaned_content:
+#                         sentiment_col.append('negative')
+#                         keyword_col.append(f'sản phẩm {neg_word}')
+#                         found = True
+#                         break
+
+#                 if not found:
+#                     # Check for positive words
+#                     for pos_word in positive_words:
+#                         if pos_word in cleaned_content:
+#                             sentiment_col.append('positive')
+#                             keyword_col.append(f'sản phẩm {pos_word}')
+#                             found = True
+#                             break
+
+#             if not found:  # If nothing matched, it's neutral
+#                 sentiment_col.append('neutral')
+#                 keyword_col.append('')
+    
+#     # Add the results to the DataFrame
+#     df[f"{category}"] = sentiment_col
+#     df[f"{category}_kw"] = keyword_col
+    
+#     return df
+
+
 def check_content_pandas(df: pd.DataFrame, category: str, keywords: dict, stop_words: set) -> pd.DataFrame:
     # Extract keywords from the keywords dictionary
-    key_phrases = keywords['key_phrases']
-    positive_words = set(keywords['positive_words'])  # Use set for faster lookup
+    key_phrases = set(keywords['key_phrases'])
+    positive_words = set(keywords['positive_words'])
     negative_words = set(keywords['negative_words'])
     
-    # Convert content to lowercase
-    df['content_lower'] = df['noi_dung_binh_luan'].str.lower()
-
-    # Remove stop words and create cleaned content
-    df['cleaned_content'] = df['content_lower'].astype(str).apply(
-        lambda x: ' '.join([word for word in x.split() if word not in stop_words])
-    )
+    # Convert content to lowercase and remove stop words
+    df['cleaned_content'] = (df['noi_dung_binh_luan']
+                             .fillna('')
+                             .str.lower()
+                             .apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words])))
     
-    # Initialize lists for results
-    sentiment_col = []
-    keyword_col = []
-
-    # Iterate over each row in the DataFrame
-    for index, row in df.iterrows():
-        found = False
-        
-        # Check if cleaned_content is None or empty
-        cleaned_content = row['cleaned_content'] or '' 
-        
+    # Vectorized operations for sentiment analysis
+    def check_sentiment(content):
         for phrase in key_phrases:
-            if phrase in cleaned_content:
-                # Check negative words first
-                for neg_word in negative_words:
-                    if neg_word in cleaned_content:
-                        sentiment_col.append('negative')
-                        keyword_col.append(f'{phrase} {neg_word}')
-                        found = True
-                        break  # Break out of the negative check
-                if found:  # If already found a negative word, no need to check further
-                    break
-                
-                # If no negatives, check for positives
-                for pos_word in positive_words:
-                    if pos_word in cleaned_content:
-                        sentiment_col.append('positive')
-                        keyword_col.append(f'{phrase} {pos_word}')
-                        found = True
-                        break
-                if found:
-                    break  # Break out if we've found a sentiment
+            if phrase in content:
+                for word in negative_words:
+                    if word in content:
+                        return 'negative', f'{phrase} {word}'
+                for word in positive_words:
+                    if word in content:
+                        return 'positive', f'{phrase} {word}'
         
-        if not found:
-            # No phrases found or no sentiment detected; check based on the category
-            if category == 'san_pham':
-                # Check for any negative word in the entire cleaned content
-                for neg_word in negative_words:
-                    if neg_word in cleaned_content:
-                        sentiment_col.append('negative')
-                        keyword_col.append(f'sản phẩm {neg_word}')
-                        found = True
-                        break
+        if category == 'san_pham':
+            for word in negative_words:
+                if word in content:
+                    return 'negative', f'sản phẩm {word}'
+            for word in positive_words:
+                if word in content:
+                    return 'positive', f'sản phẩm {word}'
+        
+        return 'neutral', ''
 
-                if not found:
-                    # Check for positive words
-                    for pos_word in positive_words:
-                        if pos_word in cleaned_content:
-                            sentiment_col.append('positive')
-                            keyword_col.append(f'sản phẩm {pos_word}')
-                            found = True
-                            break
-
-            if not found:  # If nothing matched, it's neutral
-                sentiment_col.append('neutral')
-                keyword_col.append('')
-    
-    # Add the results to the DataFrame
-    df[f"{category}"] = sentiment_col
-    df[f"{category}_kw"] = keyword_col
+    # Apply sentiment analysis
+    results = df['cleaned_content'].apply(check_sentiment)
+    df[f"{category}"], df[f"{category}_kw"] = zip(*results)
     
     return df
-
 
 def analyze_comments(df: pl.DataFrame) -> pl.DataFrame:
     # Load keywords for each type
