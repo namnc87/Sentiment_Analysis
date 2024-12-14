@@ -877,35 +877,6 @@ def get_product_line_data(filtered_df, product_line):
 
 #--- START Hàm dùng cho main_tabs[2]: Theo nhiều thương hiệu-----------------------------------
 # Cache data processing
-# @st.cache_data(ttl=3600)
-# def preprocess_data(df):
-#     df = df.copy()
-#     df['ngay_binh_luan'] = pd.to_datetime(df['ngay_binh_luan'], format='%d/%m/%Y', errors='coerce')
-#     df['month'] = df['ngay_binh_luan'].dt.to_period('M')
-#     df['hour'] = pd.to_datetime(df['gio_binh_luan'].astype(str), format='%H:%M').dt.hour
-#     return df.dropna(subset=['ngay_binh_luan'])
-
-# @st.cache_data(ttl=3600)
-# def preprocess_data(df):
-#     df['ngay_binh_luan'] = pd.to_datetime(df['ngay_binh_luan'], format='%d/%m/%Y', errors='coerce')
-#     df = df.dropna(subset=['ngay_binh_luan'])  # Drop rows with invalid dates first
-#     df['month'] = df['ngay_binh_luan'].dt.to_period('M')
-#     df['hour'] = pd.to_datetime(df['gio_binh_luan'].astype(str), format='%H:%M').dt.hour
-#     return df
-
-# # Cache unique values
-# @st.cache_data(ttl=3600)
-# def get_unique_values(df):
-#     return {
-#         'dong_san_pham': df['dong_san_pham'].unique().tolist(),
-#         'so_sao': sorted(df['so_sao'].unique().tolist()),
-#         'min_month': df['month'].min().to_timestamp(),
-#         'max_month': df['month'].max().to_timestamp(),
-#         'min_hour': df['hour'].min(),
-#         'max_hour': df['hour'].max()
-#     }
-
-
 @st.cache_data(ttl=3600)
 def preprocess_and_get_unique_values(df):
     # Convert 'ngay_binh_luan' to datetime and drop invalid rows
@@ -939,9 +910,19 @@ def preprocess_and_get_unique_values(df):
 
 
 # Cache filtered brands
+# @st.cache_data(ttl=3600)
+# def get_filtered_brands(df, selected_dong_san_pham):
+#     return df[df['dong_san_pham'].isin(selected_dong_san_pham)]['thuong_hieu'].unique().tolist()
+
 @st.cache_data(ttl=3600)
 def get_filtered_brands(df, selected_dong_san_pham):
-    return df[df['dong_san_pham'].isin(selected_dong_san_pham)]['thuong_hieu'].unique().tolist()
+    if not selected_dong_san_pham:  # Handle empty selection
+        return []
+
+    selected_brands = set(selected_dong_san_pham)  # Convert to set for faster membership testing
+    filtered_brands = df[df['dong_san_pham'].isin(selected_brands)]['thuong_hieu']
+    
+    return filtered_brands.unique().tolist()
 
 # Cache review analysis
 @st.cache_data(ttl=3600)
@@ -1224,9 +1205,6 @@ with main_tabs[2]:
 
 
     # Process data once
-    # df_processed = preprocess_data(df)
-    # unique_values = get_unique_values(df_processed)
-
     df_processed, unique_values = preprocess_and_get_unique_values(df)
 
     # UI Elements
