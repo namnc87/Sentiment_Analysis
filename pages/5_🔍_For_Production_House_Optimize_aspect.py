@@ -838,6 +838,90 @@ def analyze_product_reviews(df, selected_brands, review_type):
     return review_counts
 # ------------END_Hàm để thống kê số lượng đánh giá theo thương hiệu và loại đánh giá--------------------
 
+
+
+
+#---START ham dung cho dong_tabs[1] Dòng sản phẩm--------------------------------
+# Cache the initial data filtering
+@st.cache_data(ttl=3600)
+def filter_brand_data(df, brand):
+    # Filter by brand and remove duplicates in one step
+    filtered_df = df[df['thuong_hieu'] == brand].drop_duplicates(
+        subset=['dong_san_pham', 'ten_san_pham', 'ma_san_pham']
+    ).copy()
+    return filtered_df
+
+@st.cache_data(ttl=3600)
+def get_product_line_stats(filtered_df):
+    # Drop duplicates based on 'dong_san_pham' and 'ten_san_pham'
+    filtered_df_unique = filtered_df.drop_duplicates(subset=['dong_san_pham', 'ten_san_pham'])
+    
+    # Get value counts after removing duplicates
+    product_line_counts = filtered_df_unique['dong_san_pham'].value_counts()
+    product_line_df = pd.DataFrame({
+        'Dòng sản phẩm': product_line_counts.index, 
+        'Số lượng sản phẩm': product_line_counts.values
+    })
+    return product_line_counts, product_line_df
+
+@st.cache_data(ttl=3600)
+def get_product_line_data(filtered_df, product_line):
+    # Select only necessary columns
+    return filtered_df[filtered_df['dong_san_pham'] == product_line][
+        ['ten_san_pham', 'ma_san_pham', 'hinh_anh']
+    ].copy()
+
+
+#--------------------------------END ham dung cho dong_tabs[1] Dòng sản phẩm---
+
+
+#--- START Hàm dùng cho main_tabs[2]: Theo nhiều thương hiệu-----------------------------------
+# Cache data processing
+@st.cache_data(ttl=3600)
+def preprocess_data(df):
+    df = df.copy()
+    df['ngay_binh_luan'] = pd.to_datetime(df['ngay_binh_luan'], format='%d/%m/%Y', errors='coerce')
+    df['month'] = df['ngay_binh_luan'].dt.to_period('M')
+    df['hour'] = pd.to_datetime(df['gio_binh_luan'].astype(str), format='%H:%M').dt.hour
+    return df.dropna(subset=['ngay_binh_luan'])
+
+# Cache unique values
+@st.cache_data(ttl=3600)
+def get_unique_values(df):
+    return {
+        'dong_san_pham': df['dong_san_pham'].unique().tolist(),
+        'so_sao': sorted(df['so_sao'].unique().tolist()),
+        'min_month': df['month'].min().to_timestamp(),
+        'max_month': df['month'].max().to_timestamp(),
+        'min_hour': df['hour'].min(),
+        'max_hour': df['hour'].max()
+    }
+
+# Cache filtered brands
+@st.cache_data(ttl=3600)
+def get_filtered_brands(df, selected_dong_san_pham):
+    return df[df['dong_san_pham'].isin(selected_dong_san_pham)]['thuong_hieu'].unique().tolist()
+
+# Cache review analysis
+@st.cache_data(ttl=3600)
+def analyze_reviews(df, selected_dong_san_pham, selected_brands, selected_review_types, 
+                    start_period, end_period, start_hour, end_hour):
+    mask = (
+        df['dong_san_pham'].isin(selected_dong_san_pham) &
+        df['thuong_hieu'].isin(selected_brands) &
+        df['so_sao'].notnull() &
+        (df['month'] >= start_period) &
+        (df['month'] <= end_period) &
+        (df['hour'] >= start_hour) &
+        (df['hour'] <= end_hour) &
+        df['so_sao'].isin(selected_review_types)
+    )
+    filtered_df = df[mask]
+    return filtered_df.groupby(['thuong_hieu', 'so_sao']).size().unstack(fill_value=0)
+
+#-----------------------------------END Hàm dùng cho main_tabs[2]: Theo nhiều thương hiệu---
+
+
 # ------------START_ Main Streamlit App--------------------
 # Tạo giao diện tìm kiếm sản phẩm
 st.title("Tìm Kiếm Sản Phẩm")
@@ -997,38 +1081,53 @@ with main_tabs[1]:
                 with sub2_tabs[2]:
                     plot_product_comments_wordcloud(danh_gia, selected_code_brand)
 
+
             with dis_tabs[1]:  # 'Dòng sản phẩm'
-                product_line_counts = filtered_brand_df['dong_san_pham'].value_counts()
-                total_product_lines = product_line_counts.count()
+                filtered_brand_df = filter_brand_data(df, selected_brand)
+                product_line_counts, product_line_df = get_product_line_stats(filtered_brand_df)
+                
+                total_product_lines = len(product_line_counts)
                 st.write(f"Tổng số dòng sản phẩm của thương hiệu {selected_brand}: {total_product_lines}")
 
                 dong_tabs = st.tabs(['Sản phẩm', 'Bình luận', 'Đánh giá'])
 
-                with dong_tabs[0]:  # 'Sản phẩm'                   
-                    product_line_df = pd.DataFrame({'Dòng sản phẩm': product_line_counts.index, 'Số lượng sản phẩm': product_line_counts.values})
-
+                with dong_tabs[0]:  # 'Sản phẩm'
+                    # Create bar chart
                     fig = px.bar(product_line_df, x='Số lượng sản phẩm', y='Dòng sản phẩm',
                                 orientation='h', text='Số lượng sản phẩm',
                                 title=f'Phân bố số lượng sản phẩm theo dòng - {selected_brand}')
                     fig.update_traces(textposition='outside')
                     st.plotly_chart(fig, use_container_width=True)
 
+                    # Product line selection
                     product_lines = sorted(filtered_brand_df['dong_san_pham'].unique().tolist())
-                    selected_product_line = st.selectbox("Chọn dòng sản phẩm để xem chi tiết:", ["Chọn dòng sản phẩm"] + product_lines, key='product_line_selection')
+                    selected_product_line = st.selectbox(
+                        "Chọn dòng sản phẩm để xem chi tiết:", 
+                        ["Chọn dòng sản phẩm"] + product_lines, 
+                        key='product_line_selection'
+                    )
 
                     if selected_product_line != "Chọn dòng sản phẩm":
-                        product_line_df = filtered_brand_df[filtered_brand_df['dong_san_pham'] == selected_product_line]
+                        product_line_df = get_product_line_data(filtered_brand_df, selected_product_line)
                         st.write(f"Có {len(product_line_df)} sản phẩm trong dòng {selected_product_line}")
                         
+                        # Add pagination
+                        items_per_page = 12  # 3x4 grid
+                        total_pages = (len(product_line_df) + items_per_page - 1) // items_per_page
+                        page = st.number_input('Trang', min_value=1, max_value=total_pages, value=1) - 1
+                        
+                        start_idx = page * items_per_page
+                        end_idx = min(start_idx + items_per_page, len(product_line_df))
+                        
                         cols = st.columns(3)
-                        for idx, row in enumerate(product_line_df.itertuples()):
+                        for idx, row in enumerate(product_line_df.iloc[start_idx:end_idx].itertuples()):
                             col_idx = idx % 3
                             with cols[col_idx]:
                                 st.write(f"**{row.ten_san_pham}**")
                                 st.write(f"Mã SP: {row.ma_san_pham}")
                                 if pd.notna(row.hinh_anh):
                                     st.image(row.hinh_anh, caption=row.ten_san_pham)
-                                st.write("---")  # Separator
+                                st.write("---")
 
                 with dong_tabs[1]:  # 'Bình luận'
                     product_comments = get_product_comments(filtered_brand_df, danh_gia)
@@ -1082,107 +1181,91 @@ with main_tabs[1]:
 with main_tabs[2]:
     st.title('Thống kê Đánh giá Sản phẩm theo Thương hiệu')
 
-    # Caching the unique list of product lines
-    @st.cache_data
-    def get_dong_san_pham_list(df):
-        return df['dong_san_pham'].unique().tolist()
 
-    dong_san_pham_list = get_dong_san_pham_list(df)
+    # Process data once
+    df_processed = preprocess_data(df)
+    unique_values = get_unique_values(df_processed)
 
-    # Select product lines
-    selected_dong_san_pham = st.multiselect('Chọn Dòng Sản Phẩm:', dong_san_pham_list)
-
-    # Filter brands based on the selected product lines
-    filtered_brands = df[df['dong_san_pham'].isin(selected_dong_san_pham)]['thuong_hieu'].unique().tolist() if selected_dong_san_pham else []
-
-    # Selecting brands
+    # UI Elements
+    selected_dong_san_pham = st.multiselect('Chọn Dòng Sản Phẩm:', unique_values['dong_san_pham'])
+    
+    filtered_brands = get_filtered_brands(df_processed, selected_dong_san_pham) if selected_dong_san_pham else []
     selected_brands = st.multiselect('Chọn Thương hiệu:', filtered_brands)
+    
+    selected_review_types = st.multiselect('Chọn Loại Đánh giá:', unique_values['so_sao'])
 
-    # Select review types
-    selected_review_types = st.multiselect('Chọn Loại Đánh giá:', df['so_sao'].unique())
-
-    # Cache for processing the DataFrame
-    @st.cache_data
-    def process_dataframe(df):
-        df['ngay_binh_luan'] = pd.to_datetime(df['ngay_binh_luan'], format='%d/%m/%Y', errors='coerce')
-        df['month'] = df['ngay_binh_luan'].dt.to_period('M')
-        df['hour'] = pd.to_datetime(df['gio_binh_luan'].astype(str), format='%H:%M').dt.hour
-        return df.dropna(subset=['ngay_binh_luan'])
-
-    df_processed = process_dataframe(df)
-
-    # Date range selection
-    min_month, max_month = df_processed['month'].min().to_timestamp(), df_processed['month'].max().to_timestamp()
+    # Date and time selection
     col1, col2 = st.columns(2)
     with col1:
-        start_month = st.date_input('Tháng bắt đầu:', value=min_month, key='start_month')
+        start_month = st.date_input('Tháng bắt đầu:', value=unique_values['min_month'])
     with col2:
-        end_month = st.date_input('Tháng kết thúc:', value=max_month, key='end_month')
+        end_month = st.date_input('Tháng kết thúc:', value=unique_values['max_month'])
 
-    # Time selection
-    min_hour, max_hour = df_processed['hour'].min(), df_processed['hour'].max()
     col3, col4 = st.columns(2)
     with col3:
-        start_hour = st.number_input('Giờ bắt đầu:', min_value=min_hour, max_value=max_hour, value=min_hour, key='start_hour_input')
+        start_hour = st.number_input('Giờ bắt đầu:', 
+                                   min_value=unique_values['min_hour'], 
+                                   max_value=unique_values['max_hour'], 
+                                   value=unique_values['min_hour'])
     with col4:
-        end_hour = st.number_input('Giờ kết thúc:', min_value=start_hour, max_value=max_hour, value=max_hour, key='end_hour_input')
+        end_hour = st.number_input('Giờ kết thúc:', 
+                                 min_value=start_hour, 
+                                 max_value=unique_values['max_hour'], 
+                                 value=unique_values['max_hour'])
 
-    # Analysis button
     if st.button('Thống kê'):
-        if selected_brands and selected_dong_san_pham:
-            # Filter data
-            filtered_df = df_processed[
-                df_processed['dong_san_pham'].isin(selected_dong_san_pham) & 
-                df_processed['thuong_hieu'].isin(selected_brands) & 
-                df_processed['so_sao'].notnull()
-            ]
-
-            # Filter by date and hour
+        if selected_brands and selected_dong_san_pham and selected_review_types:
             start_period = pd.to_datetime(start_month).to_period('M')
             end_period = pd.to_datetime(end_month).to_period('M')
-            filtered_df = filtered_df[
-                (filtered_df['month'] >= start_period) & 
-                (filtered_df['month'] <= end_period) & 
-                (filtered_df['hour'] >= start_hour) & 
-                (filtered_df['hour'] <= end_hour)
-            ]
+            
+            review_counts = analyze_reviews(
+                df_processed, selected_dong_san_pham, selected_brands, 
+                selected_review_types, start_period, end_period, 
+                start_hour, end_hour
+            )
 
-            # Group by brand and review type
-            review_counts = filtered_df[filtered_df['so_sao'].isin(selected_review_types)].groupby(['thuong_hieu', 'so_sao']).size().unstack(fill_value=0)
 
             if not review_counts.empty:
                 st.write(f'Số lượng đánh giá cho các loại **{", ".join(map(str, selected_review_types))}**:')
                 
-                # Plot
-                plt.figure(figsize=(10, 6))
-                ax = review_counts.plot(kind='bar', width=0.8)
+                # Bar plot
+                fig_bar = plt.figure(figsize=(10, 6))
+                ax = review_counts.plot(kind='bar', width=0.8, ax=plt.gca())
                 for container in ax.containers:
                     for bar in container:
                         height = bar.get_height()
-                        ax.annotate(f'{height}', xy=(bar.get_x() + bar.get_width() / 2, height), xytext=(0, 3), textcoords='offset points', ha='center', va='bottom')
+                        ax.annotate(f'{height}', 
+                                  xy=(bar.get_x() + bar.get_width() / 2, height),
+                                  xytext=(0, 3), 
+                                  textcoords='offset points',
+                                  ha='center', 
+                                  va='bottom')
 
                 plt.title('Số lượng Đánh giá theo Thương hiệu và Loại Đánh giá')
                 plt.xlabel('Thương hiệu')
                 plt.ylabel('Số lượng Đánh giá')
                 plt.xticks(rotation=45)
                 plt.legend(title='Loại Đánh giá')
-                st.pyplot(plt)  
-                        
+                st.pyplot(fig_bar)
+                plt.close(fig_bar)
+
+                # Pie charts
                 valid_review_types = sorted([rt for rt in selected_review_types if rt in review_counts.columns])
-                # Pie charts for review types
                 if valid_review_types:
                     pie_tabs = st.tabs([f"{rt} sao" for rt in valid_review_types])
                     for i, review_type in enumerate(valid_review_types):
                         with pie_tabs[i]:
-                            pie_data = review_counts[review_type]
-                            fig_pie, ax_pie = plt.subplots(figsize=(8, 8))
-                            pie_data.plot(kind='pie', autopct='%1.1f%%', startangle=90, ax=ax_pie)
-                            ax_pie.set_title(f'Tỷ lệ đánh giá {review_type} sao giữa các thương hiệu')
-                            ax_pie.set_ylabel('')
+                            fig_pie = plt.figure(figsize=(8, 8))
+                            review_counts[review_type].plot(kind='pie', 
+                                                         autopct='%1.1f%%', 
+                                                         startangle=90)
+                            plt.title(f'Tỷ lệ đánh giá {review_type} sao giữa các thương hiệu')
+                            plt.ylabel('')
                             st.pyplot(fig_pie)
+                            plt.close()
                 else:
-                    st.warning("Không có loại đánh giá nào đáng để hiển thị.")
-            else:    
-                st.warning("Vui lòng chọn ít nhất một thương hiệu và một dòng sản phẩm.")
+                    st.warning("Không có loại đánh giá nào để hiển thị.")
+            else:
+                st.warning("Không có dữ liệu phù hợp với các điều kiện đã chọn.")
         else:
-            st.write('Vui lòng chọn ít nhất một thương hiệu và một dòng sản phẩm.')
+            st.warning("Vui lòng chọn ít nhất một thương hiệu, một dòng sản phẩm và một loại đánh giá.")
