@@ -910,10 +910,6 @@ def preprocess_and_get_unique_values(df):
 
 
 # Cache filtered brands
-# @st.cache_data(ttl=3600)
-# def get_filtered_brands(df, selected_dong_san_pham):
-#     return df[df['dong_san_pham'].isin(selected_dong_san_pham)]['thuong_hieu'].unique().tolist()
-
 @st.cache_data(ttl=3600)
 def get_filtered_brands(df, selected_dong_san_pham):
     if not selected_dong_san_pham:  # Handle empty selection
