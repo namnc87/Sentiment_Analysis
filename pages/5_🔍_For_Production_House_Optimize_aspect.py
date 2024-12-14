@@ -1030,7 +1030,7 @@ with main_tabs[1]:
                                     st.image(row.hinh_anh, caption=row.ten_san_pham)
                                 st.write("---")  # Separator
 
-                with dong_tabs[1]:
+                with dong_tabs[1]:  # 'Bình luận'
                     product_comments = get_product_comments(filtered_brand_df, danh_gia)
                     comments_by_line = product_comments.groupby('dong_san_pham')['noi_dung_binh_luan'].count().reset_index()
                     comments_by_line.columns = ['Dòng sản phẩm', 'Số lượng bình luận']
@@ -1044,25 +1044,14 @@ with main_tabs[1]:
                     st.write("Số lượng bình luận theo sentiment cho từng dòng sản phẩm:")
                     st.dataframe(sentiment_by_line)
 
-                    # if not sentiment_by_line.empty:
-                    #     for dong_sp, row in sentiment_by_line.iterrows():
-                    #         col = st.columns(2)  # Limiting to 2 per row
-                    #         with col[0]:
-                    #             fig = px.pie(values=row.values, names=row.index,
-                    #                         title=f'Phân bố bình luận - {dong_sp}',
-                    #                         color_discrete_map={'positive': '#2ECC71', 'negative': '#E74C3C'})
-                    #             st.plotly_chart(fig)
-                    #             st.write(f"Tích cực: {row.get('positive', 0)}")
-                    #             st.write(f"Tiêu cực: {row.get('negative', 0)}")
-
-                if not sentiment_by_line.empty:
-                    for dong_sp, row in sentiment_by_line.iterrows():
-                        fig = px.pie(values=row.values, names=row.index,
-                                        title=f'Phân bố bình luận - {dong_sp}',
-                                        color_discrete_map={'positive': '#2ECC71', 'negative': '#E74C3C'})
-                        st.plotly_chart(fig)
-                        st.write(f"Tích cực: {row.get('positive', 0)}")
-                        st.write(f"Tiêu cực: {row.get('negative', 0)}")
+                    if not sentiment_by_line.empty:
+                        for dong_sp, row in sentiment_by_line.iterrows():
+                            fig = px.pie(values=row.values, names=row.index,
+                                            title=f'Phân bố bình luận - {dong_sp}',
+                                            color_discrete_map={'positive': '#2ECC71', 'negative': '#E74C3C'})
+                            st.plotly_chart(fig)
+                            st.write(f"Tích cực: {row.get('positive', 0)}")
+                            st.write(f"Tiêu cực: {row.get('negative', 0)}")
 
                 with dong_tabs[2]:  # 'Đánh giá'
                     rating_counts = get_rating_counts(filtered_brand_df, danh_gia)
